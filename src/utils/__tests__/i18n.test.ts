@@ -41,4 +41,64 @@ describe("i18n Core Engine", () => {
     // Or if unknown key, return key
     expect(t("unknown.nonexistent.key")).toBe("unknown.nonexistent.key");
   });
+
+  describe("Compute & Recode i18n keys", () => {
+    const requiredKeys = [
+      "transformTab.computeHint",
+      "transformTab.recodeTargetMode",
+      "transformTab.recodeTargetSame",
+      "transformTab.recodeTargetDifferent",
+      "transformTab.recodeNewColLabel",
+      "transformTab.recodeNewColPlaceholder",
+      "transformTab.recodeNewColErrorEmpty",
+      "transformTab.recodeNewColErrorDuplicate",
+      "transformTab.recodeTypeValue",
+      "transformTab.recodeTypeRange",
+      "transformTab.recodeFromPlaceholder",
+      "transformTab.recodeMinPlaceholder",
+      "transformTab.recodeMaxPlaceholder",
+      "transformTab.recodeToPlaceholder",
+      "transformTab.recodeElseToggle",
+      "transformTab.recodeElseActionCopy",
+      "transformTab.recodeElseActionSysmis",
+      "transformTab.recodeElseActionCustom",
+      "transformTab.recodeElseCustomPlaceholder",
+      "transformTab.recodeAddRule",
+      "transformTab.recodeDeleteRule",
+      "transformTab.resultRecode",
+      "transformTab.suffixRecode",
+    ];
+
+    it("has all keys defined in both English and Vietnamese", () => {
+      for (const key of requiredKeys) {
+        setLocale("en");
+        const enVal = t(key);
+        expect(enVal, `Missing English key: ${key}`).not.toBe(key);
+
+        setLocale("vi");
+        const viVal = t(key);
+        expect(viVal, `Missing Vietnamese key: ${key}`).not.toBe(key);
+      }
+    });
+
+    it("includes MEDIAN and SD in computeHint", () => {
+      setLocale("en");
+      expect(t("transformTab.computeHint")).toContain("median");
+      expect(t("transformTab.computeHint")).toContain("sd");
+
+      setLocale("vi");
+      expect(t("transformTab.computeHint")).toContain("median");
+      expect(t("transformTab.computeHint")).toContain("sd");
+    });
+
+    it("interpolates resultRecode correctly", () => {
+      setLocale("en");
+      expect(t("transformTab.resultRecode", { recoded: 5, total: 10 })).toContain("5");
+      expect(t("transformTab.resultRecode", { recoded: 5, total: 10 })).toContain("10");
+
+      setLocale("vi");
+      expect(t("transformTab.resultRecode", { recoded: 5, total: 10 })).toContain("5");
+      expect(t("transformTab.resultRecode", { recoded: 5, total: 10 })).toContain("10");
+    });
+  });
 });
