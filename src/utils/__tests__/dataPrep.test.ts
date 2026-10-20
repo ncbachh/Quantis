@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { compileFormula, computeVariable } from "../dataPrep";
+import {
+  compileFormula,
+  computeVariable,
+  applyRecode,
+  type RecodeConfig,
+} from "../dataPrep";
 
 describe("Formula Engine: Statistical Functions", () => {
   const header = ["Q1", "Q2", "Q3", "Q4"];
@@ -97,3 +102,174 @@ describe("Formula Engine: Statistical Functions", () => {
     });
   });
 });
+
+describe("applyRecode pure function", () => {
+  const sampleRows = [
+    ["ID", "AGE", "GENDER_CODE", "STATUS"],
+    ["1", "20", "1", "Active"],
+    ["2", "35", "2", "Inactive"],
+    ["3", "18", "1", "Pending"],
+    ["4", "65", "9", "Active"],
+    ["5", "text", "", "Active"],
+  ];
+
+  it("recodes with Value rules into same variable (targetMode: 'same')", () => {
+    const config: RecodeConfig = {
+      sourceCol: "GENDER_CODE",
+      targetMode: "same",
+      rules: [
+        { type: "value", from: "1", to: "Male" },
+        { type: "value", from: "2", to: "Female" },
+      ],
+      elseRule: { enabled: true, action: "copy" },
+    };
+
+    const res = applyRecode(sampleRows, config);
+    expect(res.error).toBeUndefined();
+    expect(res.rows[0]).toEqual(["ID", "AGE", "GENDER_CODE", "STATUS"]);
+    expect(res.rows[1][2]).toBe("Male");
+    expect(res.rows[2][2]).toBe("Female");
+    expect(res.rows[3][2]).toBe("Male");
+    expect(res.rows[4][2]).toBe("9"); // untouched via copy
+    expect(res.rows[5][2]).toBe(""); // untouched via copy
+  });
+
+  it("recodes with Range rules (inclusive) into different variable", () => {
+    const config: RecodeConfig = {
+      sourceCol: "AGE",
+      targetMode: "different",
+      targetCol: "AGE_GROUP",
+      rules: [
+        { type: "range", rangeMin: "18", rangeMax: "25", to: "Young Adult" },
+        { type: "range", rangeMin: "26", rangeMax: "60", to: "Middle Age" },
+        { type: "range", rangeMin: "61", rangeMax: "100", to: "Senior" },
+      ],
+      elseRule: { enabled: true, action: "custom", customValue: "Other" },
+    };
+
+    const res = applyRecode(sampleRows, config);
+    expect(res.error).toBeUndefined();
+    expect(res.rows[0]).toEqual(["ID", "AGE", "GENDER_CODE", "STATUS", "AGE_GROUP"]);
+    expect(res.rows[1][4]).toBe("Young Adult"); // 20
+    expect(res.rows[2][4]).toBe("Middle Age"); // 35
+    expect(res.rows[3][4]).toBe("Young Adult"); // 18 (inclusive boundary)
+    expect(res.rows[4][4]).toBe("Senior"); // 65
+    expect(res.rows[5][4]).toBe("Other"); // non-numeric "text" falls to ELSE custom
+    // Original column AGE is preserved completely
+    expect(res.rows[1][1]).toBe("20");
+    expect(res.rows[2][1]).toBe("35");
+  });
+
+  it("handles decimal numbers in Range rules inclusively", () => {
+    const rows = [
+      ["SCORE"],
+      ["1.0"],
+      ["1.5"],
+      ["2.0"],
+      ["2.1"],
+    ];
+
+    const config: RecodeConfig = {
+      sourceCol: "SCORE",
+      targetMode: "different",
+      targetCol: "TIER",
+      rules: [
+        { type: "range", rangeMin: "1.0", rangeMax: "2.0", to: "Tier 1" },
+      ],
+      elseRule: { enabled: true, action: "custom", customValue: "Tier 2" },
+    };
+
+    const res = applyRecode(rows, config);
+    expect(res.rows[1][1]).toBe("Tier 1"); // 1.0
+    expect(res.rows[2][1]).toBe("Tier 1"); // 1.5
+    expect(res.rows[3][1]).toBe("Tier 1"); // 2.0
+    expect(res.rows[4][1]).toBe("Tier 2"); // 2.1
+  });
+
+  it("handles rule precedence: first matching rule wins", () => {
+    const rows = [["X"], ["10"]];
+    const config: RecodeConfig = {
+      sourceCol: "X",
+      targetMode: "same",
+      rules: [
+        { type: "value", from: "10", to: "Rule 1" },
+        { type: "range", rangeMin: "0", rangeMax: "20", to: "Rule 2" },
+      ],
+      elseRule: { enabled: false, action: "copy" },
+    };
+
+    const res = applyRecode(rows, config);
+    expect(res.rows[1][0]).toBe("Rule 1");
+  });
+
+  it("handles ELSE sysmis by setting unmatched values to empty string", () => {
+    const config: RecodeConfig = {
+      sourceCol: "STATUS",
+      targetMode: "same",
+      rules: [
+        { type: "value", from: "Active", to: "A" },
+      ],
+      elseRule: { enabled: true, action: "sysmis" },
+    };
+
+    const res = applyRecode(sampleRows, config);
+    expect(res.rows[1][3]).toBe("A");
+    expect(res.rows[2][3]).toBe(""); // Inactive -> sysmis
+    expect(res.rows[3][3]).toBe(""); // Pending -> sysmis
+  });
+
+  it("returns error if source column does not exist", () => {
+    const config: RecodeConfig = {
+      sourceCol: "NON_EXISTENT",
+      targetMode: "same",
+      rules: [{ type: "value", from: "1", to: "2" }],
+      elseRule: { enabled: false, action: "copy" },
+    };
+
+    const res = applyRecode(sampleRows, config);
+    expect(res.error).toBeDefined();
+    expect(res.error).toContain("Chưa chọn cột nguồn");
+  });
+
+  it("returns error if targetMode is different and targetCol is empty", () => {
+    const config: RecodeConfig = {
+      sourceCol: "AGE",
+      targetMode: "different",
+      targetCol: "   ",
+      rules: [{ type: "value", from: "20", to: "Twenty" }],
+      elseRule: { enabled: false, action: "copy" },
+    };
+
+    const res = applyRecode(sampleRows, config);
+    expect(res.error).toBeDefined();
+    expect(res.error).toContain("Hãy đặt tên cho cột mới");
+  });
+
+  it("returns error if targetMode is different and targetCol already exists", () => {
+    const config: RecodeConfig = {
+      sourceCol: "AGE",
+      targetMode: "different",
+      targetCol: "STATUS",
+      rules: [{ type: "value", from: "20", to: "Twenty" }],
+      elseRule: { enabled: false, action: "copy" },
+    };
+
+    const res = applyRecode(sampleRows, config);
+    expect(res.error).toBeDefined();
+    expect(res.error).toContain("Đã có cột tên «STATUS»");
+  });
+
+  it("does not mutate original rows (immutability)", () => {
+    const originalCopy = JSON.parse(JSON.stringify(sampleRows));
+    const config: RecodeConfig = {
+      sourceCol: "GENDER_CODE",
+      targetMode: "same",
+      rules: [{ type: "value", from: "1", to: "Male" }],
+      elseRule: { enabled: true, action: "copy" },
+    };
+
+    applyRecode(sampleRows, config);
+    expect(sampleRows).toEqual(originalCopy);
+  });
+});
+
