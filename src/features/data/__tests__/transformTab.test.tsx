@@ -308,4 +308,79 @@ describe("Task 10: TransformTab Refactor & Missing Data Suite", () => {
     // CRITICAL: Label must be empty string, NOT the formula!
     expect(newDs.variables!["MEDIAN_INC"].label).toBe("");
   });
+
+  it("Task 5: Recode with Range rules into Different Variable creates column and metadata", async () => {
+    setLocale("en");
+    useDataStore.setState({
+      datasets: [JSON.parse(JSON.stringify(sampleDatasetWithMissing))],
+      selectedDatasetId: "ds_transform_test",
+    });
+
+    let rendered: any = null;
+    function RecodeHarness() {
+      rendered = TransformTab({
+        selectedDs: sampleDatasetWithMissing,
+        setDatasets: useDataStore.getState().setDatasets,
+        onSelectDataset: vi.fn(),
+        initialAction: "recode",
+        initialShowChoiceModal: true,
+        // @ts-expect-error test props
+        initialRecodeCol: "INCOME",
+        initialRecodeTargetMode: "different",
+        initialRecodeNewColName: "INCOME_LEVEL",
+        initialRecodeRules: [
+          { type: "range", rangeMin: "900", rangeMax: "1100", to: "Level 1" },
+          { type: "range", rangeMin: "1400", rangeMax: "1600", to: "Level 2" },
+        ],
+        initialRecodeElseEnabled: true,
+        initialRecodeElseAction: "custom",
+        initialRecodeElseValue: "Other",
+      });
+      return rendered;
+    }
+
+    renderToStaticMarkup(<RecodeHarness />);
+
+    const buttons: any[] = [];
+    function collectButtons(node: any) {
+      if (!node) return;
+      if (node.type === "button") buttons.push(node);
+      if (node.props?.children) {
+        const ch = Array.isArray(node.props.children) ? node.props.children : [node.props.children];
+        ch.forEach(collectButtons);
+      }
+    }
+    collectButtons(rendered);
+
+    const createNewBtn = buttons.find((b) =>
+      String(b.props?.children).includes(t("transformTab.createNewButton"))
+    );
+    expect(createNewBtn).toBeDefined();
+
+    await createNewBtn.props.onClick();
+
+    const datasets = useDataStore.getState().datasets;
+    expect(datasets.length).toBe(2);
+    const newDs = datasets[1];
+    expect(newDs.columnNames).toContain("INCOME_LEVEL");
+    expect(newDs.variables!["INCOME_LEVEL"]).toBeDefined();
+    expect(newDs.variables!["INCOME_LEVEL"].type).toBe("string");
+    expect(newDs.variables!["INCOME_LEVEL"].measure).toBe("nominal");
+
+    // Check recoded data rows
+    // Row 1: INCOME 1000 -> Level 1
+    // Row 2: empty -> Other
+    // Row 3: 99 -> Other
+    // Row 4: 1500 -> Level 2
+    const data = newDs.data!;
+    const levelColIdx = newDs.columnNames.indexOf("INCOME_LEVEL");
+    expect(data[1][levelColIdx]).toBe("Level 1");
+    expect(data[2][levelColIdx]).toBe("Other");
+    expect(data[3][levelColIdx]).toBe("Other");
+    expect(data[4][levelColIdx]).toBe("Level 2");
+
+    // Original INCOME is untouched
+    const origIncIdx = newDs.columnNames.indexOf("INCOME");
+    expect(data[1][origIncIdx]).toBe("1000");
+  });
 });
