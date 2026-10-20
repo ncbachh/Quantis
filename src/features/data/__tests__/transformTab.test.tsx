@@ -383,4 +383,81 @@ describe("Task 10: TransformTab Refactor & Missing Data Suite", () => {
     const origIncIdx = newDs.columnNames.indexOf("INCOME");
     expect(data[1][origIncIdx]).toBe("1000");
   });
+
+  it("Task 6: renders all new Recode UI controls (Same/Diff, Range, ELSE) in static markup", () => {
+    setLocale("en");
+    const html = renderToStaticMarkup(
+      <TransformTab
+        selectedDs={sampleDatasetWithMissing}
+        setDatasets={vi.fn()}
+        onSelectDataset={vi.fn()}
+        initialAction="recode"
+        initialRecodeElseEnabled={true}
+      />
+    );
+
+    expect(html).toContain('name="recodeTargetMode"');
+    expect(html).toContain(t("transformTab.recodeTargetSame"));
+    expect(html).toContain(t("transformTab.recodeTargetDifferent"));
+    expect(html).toContain(t("transformTab.recodeTypeValue"));
+    expect(html).toContain(t("transformTab.recodeTypeRange"));
+    expect(html).toContain(t("transformTab.recodeElseToggle"));
+    expect(html).toContain(t("transformTab.recodeElseActionCopy"));
+    expect(html).toContain(t("transformTab.recodeElseActionSysmis"));
+    expect(html).toContain(t("transformTab.recodeElseActionCustom"));
+  });
+
+  it("Task 6: Recode into Same Variable overwrites in place when overwriteOriginal is true", async () => {
+    setLocale("en");
+    useDataStore.setState({
+      datasets: [JSON.parse(JSON.stringify(sampleDatasetWithMissing))],
+      selectedDatasetId: "ds_transform_test",
+    });
+
+    let rendered: any = null;
+    function SameVarHarness() {
+      rendered = TransformTab({
+        selectedDs: sampleDatasetWithMissing,
+        setDatasets: useDataStore.getState().setDatasets,
+        onSelectDataset: vi.fn(),
+        initialAction: "recode",
+        initialShowChoiceModal: true,
+        initialRecodeCol: "GENDER",
+        initialRecodeTargetMode: "same",
+        initialRecodeRules: [
+          { type: "value", from: "Nam", to: "Male" },
+          { type: "value", from: "Nữ", to: "Female" },
+        ],
+        initialRecodeElseEnabled: false,
+      });
+      return rendered;
+    }
+
+    renderToStaticMarkup(<SameVarHarness />);
+
+    const buttons: any[] = [];
+    function collectButtons(node: any) {
+      if (!node) return;
+      if (node.type === "button") buttons.push(node);
+      if (node.props?.children) {
+        const ch = Array.isArray(node.props.children) ? node.props.children : [node.props.children];
+        ch.forEach(collectButtons);
+      }
+    }
+    collectButtons(rendered);
+
+    const overwriteBtn = buttons.find((b) =>
+      String(b.props?.children).includes(t("transformTab.overwriteOriginalButton"))
+    );
+    expect(overwriteBtn).toBeDefined();
+
+    await overwriteBtn.props.onClick();
+
+    const datasets = useDataStore.getState().datasets;
+    expect(datasets.length).toBe(1);
+    const updatedDs = datasets[0];
+    const genderIdx = updatedDs.columnNames.indexOf("GENDER");
+    expect(updatedDs.data![1][genderIdx]).toBe("Male");
+    expect(updatedDs.data![2][genderIdx]).toBe("Female");
+  });
 });
