@@ -254,4 +254,58 @@ describe("Task 10: TransformTab Refactor & Missing Data Suite", () => {
     expect(useDataStore.getState().datasets.length).toBe(1);
     expect(useDataStore.getState().datasets[0].id).toBe("ds_transform_test");
   });
+
+  it("Task 4: Compute Variable initializes metadata with empty label instead of formula", async () => {
+    setLocale("en");
+    useDataStore.setState({
+      datasets: [JSON.parse(JSON.stringify(sampleDatasetWithMissing))],
+      selectedDatasetId: "ds_transform_test",
+    });
+
+    let rendered: any = null;
+    function ComputeHarness() {
+      rendered = TransformTab({
+        selectedDs: sampleDatasetWithMissing,
+        setDatasets: useDataStore.getState().setDatasets,
+        onSelectDataset: vi.fn(),
+        initialAction: "compute",
+        initialComputeName: "MEDIAN_INC",
+        initialComputeFormula: "MEDIAN([INCOME])",
+        initialShowChoiceModal: true,
+      });
+      return rendered;
+    }
+
+    renderToStaticMarkup(<ComputeHarness />);
+
+    const buttons: any[] = [];
+    function collectButtons(node: any) {
+      if (!node) return;
+      if (node.type === "button") buttons.push(node);
+      if (node.props?.children) {
+        const ch = Array.isArray(node.props.children) ? node.props.children : [node.props.children];
+        ch.forEach(collectButtons);
+      }
+    }
+    collectButtons(rendered);
+
+    const createNewBtn = buttons.find((b) =>
+      String(b.props?.children).includes(t("transformTab.createNewButton"))
+    );
+    expect(createNewBtn).toBeDefined();
+
+    await createNewBtn.props.onClick();
+
+    const datasets = useDataStore.getState().datasets;
+    expect(datasets.length).toBe(2);
+    const newDs = datasets[1];
+    expect(newDs.columnNames).toContain("MEDIAN_INC");
+    expect(newDs.variables).toBeDefined();
+    expect(newDs.variables!["MEDIAN_INC"]).toBeDefined();
+    expect(newDs.variables!["MEDIAN_INC"].name).toBe("MEDIAN_INC");
+    expect(newDs.variables!["MEDIAN_INC"].type).toBe("numeric");
+    expect(newDs.variables!["MEDIAN_INC"].measure).toBe("scale");
+    // CRITICAL: Label must be empty string, NOT the formula!
+    expect(newDs.variables!["MEDIAN_INC"].label).toBe("");
+  });
 });

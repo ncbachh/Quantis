@@ -36,6 +36,21 @@ export interface TransformTabProps {
   onWorkflowDatasetAdd?: (id: string) => void;
   initialShowChoiceModal?: boolean;
   initialColsMultiple?: string[];
+  initialAction?:
+    | "drop_missing"
+    | "fill_mean"
+    | "fill_median"
+    | "fill_mode"
+    | "fill_hot_deck"
+    | "fill_mice"
+    | "z_score"
+    | "min_max"
+    | "filter"
+    | "sort"
+    | "recode"
+    | PrepAction;
+  initialComputeName?: string;
+  initialComputeFormula?: string;
 }
 
 export function TransformTab({
@@ -45,6 +60,9 @@ export function TransformTab({
   onWorkflowDatasetAdd,
   initialShowChoiceModal = false,
   initialColsMultiple = [],
+  initialAction = "drop_missing",
+  initialComputeName = "",
+  initialComputeFormula = "",
 }: TransformTabProps) {
   const [transformCol] = useState("");
   const [transformColsMultiple, setTransformColsMultiple] = useState<string[]>(initialColsMultiple);
@@ -61,11 +79,11 @@ export function TransformTab({
     | "sort"
     | "recode"
     | PrepAction
-  >("drop_missing");
+  >(initialAction);
   const [renameFrom, setRenameFrom] = useState("");
   const [renameTo, setRenameTo] = useState("");
-  const [computeName, setComputeName] = useState("");
-  const [computeFormula, setComputeFormula] = useState("");
+  const [computeName, setComputeName] = useState(initialComputeName);
+  const [computeFormula, setComputeFormula] = useState(initialComputeFormula);
   const [logKind, setLogKind] = useState<LogKind>("ln");
   const [iqrK, setIqrK] = useState("1.5");
   const [prepNote, setPrepNote] = useState<{ ok: boolean; text: string } | null>(null);
@@ -324,7 +342,7 @@ export function TransformTab({
           name: computeName,
           type: "numeric",
           measure: "scale",
-          label: computeFormula,
+          label: "",
           decimals: 2,
           align: "right",
         };
