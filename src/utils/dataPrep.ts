@@ -190,8 +190,43 @@ const FUNCS: Record<string, { min: number; max: number; f: (a: number[]) => numb
   mean: { min: 1, max: 99, f: (a) => (finite(a).length ? finite(a).reduce((s, x) => s + x, 0) / finite(a).length : NaN) },
   min: { min: 1, max: 99, f: (a) => (finite(a).length ? Math.min(...finite(a)) : NaN) },
   max: { min: 1, max: 99, f: (a) => (finite(a).length ? Math.max(...finite(a)) : NaN) },
+  median: {
+    min: 1,
+    max: 99,
+    f: (a) => {
+      const vals = finite(a).sort((x, y) => x - y);
+      const n = vals.length;
+      if (n === 0) return NaN;
+      const mid = Math.floor(n / 2);
+      return n % 2 !== 0 ? vals[mid] : (vals[mid - 1] + vals[mid]) / 2;
+    },
+  },
+  sd: {
+    min: 1,
+    max: 99,
+    f: (a) => {
+      const vals = finite(a);
+      const n = vals.length;
+      if (n < 2) return NaN;
+      const mean = vals.reduce((s, x) => s + x, 0) / n;
+      const ss = vals.reduce((s, x) => s + (x - mean) ** 2, 0);
+      return Math.sqrt(ss / (n - 1));
+    },
+  },
+  std: {
+    min: 1,
+    max: 99,
+    f: (a) => {
+      const vals = finite(a);
+      const n = vals.length;
+      if (n < 2) return NaN;
+      const mean = vals.reduce((s, x) => s + x, 0) / n;
+      const ss = vals.reduce((s, x) => s + (x - mean) ** 2, 0);
+      return Math.sqrt(ss / (n - 1));
+    },
+  },
 };
-const MULTI_SKIP_NAN = new Set(["sum", "mean", "min", "max"]);
+const MULTI_SKIP_NAN = new Set(["sum", "mean", "min", "max", "median", "sd", "std"]);
 
 /** Biên dịch công thức thành hàm tính theo một dòng. `header` dùng để tra tên cột. */
 export function compileFormula(formula: string, header: string[]): { fn: (cells: string[]) => number; refs: string[] } {
