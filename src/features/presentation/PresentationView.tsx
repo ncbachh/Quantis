@@ -48,6 +48,11 @@ import {
 import * as quantisApi from "@/api";
 import { t, aiAnswerLangHint } from "@/i18n";
 import { AIAssistPanel, type AIQuickPrompt } from "@/features/ai";
+import {
+  aggregateData,
+  type AggregateFunction,
+  type AggregateMetrics,
+} from "@/utils/aggregation";
 
 export interface PresentationViewProps {
   tab: PresentationTab;
@@ -62,6 +67,9 @@ export interface PresentationViewProps {
   chartType: PresentationChartType;
   setChartType: (t: PresentationChartType) => void;
   showToast?: (msg: string) => void;
+  initialXCol?: string;
+  initialYCol?: string;
+  initialYAggregation?: AggregateFunction;
 }
 
 export function PresentationView({
@@ -73,9 +81,13 @@ export function PresentationView({
   chartType,
   setChartType: _setChartType,
   showToast,
+  initialXCol = "",
+  initialYCol = "",
+  initialYAggregation = "mean",
 }: PresentationViewProps) {
-  const [chartXCol, setChartXCol] = useState("");
-  const [chartYCol, setChartYCol] = useState("");
+  const [chartXCol, setChartXCol] = useState(initialXCol);
+  const [chartYCol, setChartYCol] = useState(initialYCol);
+  const [yAggregation, setYAggregation] = useState<AggregateFunction>(initialYAggregation);
   const [histogramCol, setHistogramCol] = useState("");
   const [showHistogramDensity, setShowHistogramDensity] = useState(false);
   const [stackByCol, setStackByCol] = useState("");
@@ -133,19 +145,15 @@ export function PresentationView({
       ? rows.slice(1).map((r) => ({ x: isScatter ? numCell(r[xIdx]) : r[xIdx], y: numCell(r[yIdx]) })).filter((d) => !Number.isNaN(d.y) && (!isScatter || !Number.isNaN(Number(d.x))))
       : [];
     const barData = !isScatter && xCol && xIdx >= 0 ? (() => { const counts: Record<string, number> = {}; rows.slice(1).forEach((r) => { const v = r[xIdx] ??""; counts[v] = (counts[v] || 0) + 1; }); return Object.entries(counts).map(([name, count]) => ({ name, count })).slice(0, 20); })() : [];
-    /** Biểu đồ cột: dùng X làm danh mục; nếu có Y (số) thì chiều cao = tổng Y theo nhóm, không thì = tần số */
+    /** Biểu đồ cột: dùng X làm danh mục; nếu có Y (số) thì tính theo hàm gộp đã chọn, không thì = tần số */
     const barChartData = (chartType === "bar" || chartType === "barH") && xCol && xIdx >= 0
       ? (yCol && yIdx >= 0 && numericCols.includes(yCol)
-          ? (() => {
-              const sums: Record<string, number> = {};
-              rows.slice(1).forEach((r) => {
-                const name = String(r[xIdx] ?? "").trim();
-                const val = numCell(r[yIdx]);
-                if (name === "" || Number.isNaN(val)) return;
-                sums[name] = (sums[name] || 0) + val;
-              });
-              return Object.entries(sums).map(([name, count]) => ({ name, count })).slice(0, 24);
-            })()
+          ? aggregateData(rows, {
+              groupByCols: [xCol],
+              measureCol: yCol,
+              func: yAggregation,
+              limit: 30,
+            }).map((g) => ({ name: g.name, count: g.value, metrics: g.metrics }))
           : (() => { const counts: Record<string, number> = {}; rows.slice(1).forEach((r) => { const v = r[xIdx] ??""; counts[v] = (counts[v] || 0) + 1; }); return Object.entries(counts).map(([name, count]) => ({ name, count })).slice(0, 24); })())
       : barData;
     const barDataSorted = barSortOrder === "none" ? barChartData : [...barChartData].sort((a, b) => (barSortOrder === "asc" ? a.count - b.count : b.count - a.count));
@@ -233,6 +241,47 @@ export function PresentationView({
       ? rows.slice(1).map((r) => ({ x: r[xIdx] ??"", y: numCell(r[yIdx]) })).filter((d) => !Number.isNaN(d.y))
       : [];
     const areaData = lineData;
+    const lineChartData = (chartType === "line" && xCol && yCol && xIdx >= 0 && yIdx >= 0 && numericCols.includes(yCol))
+      ? aggregateData(rows, {
+          groupByCols: [xCol],
+          measureCol: yCol,
+          func: yAggregation,
+          limit: 30,
+        }).map((g) => ({ x: g.name, y: g.value, metrics: g.metrics }))
+      : lineData;
+    const isAggregated = Boolean(yCol && yIdx >= 0 && numericCols.includes(yCol));
+    const activeAggLegendName = isAggregated
+      ? `${t("presentationView.aggLabel." + yAggregation)} ${t("presentationView.ofPreposition")} ${yCol}`
+      : "";
+
+    const renderAggTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
+      if (!active || !payload?.length || !payload[0]?.payload) return null;
+      const p = payload[0].payload as { name?: string; x?: string; count?: number; y?: number; metrics?: AggregateMetrics };
+      const label = p.name ?? p.x ?? "";
+      const val = p.count ?? p.y;
+      if (!p.metrics) {
+        return (
+          <div className="rounded-lg border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-800 p-2 text-sm shadow-lg">
+            <p className="font-medium text-neutral-900 dark:text-neutral-100">{label}</p>
+            <p className="text-neutral-600 dark:text-neutral-300">{val !== undefined ? val : ""}</p>
+          </div>
+        );
+      }
+      const formattedVal = val !== undefined ? Number(val).toFixed(2) : "";
+      const stdVal = Number(p.metrics.std).toFixed(2);
+      const funcLabel = t(`presentationView.aggLabel.${yAggregation}`);
+      return (
+        <div className="rounded-lg border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-800 p-2 text-sm shadow-lg">
+          <p className="font-medium text-neutral-900 dark:text-neutral-100">{label}</p>
+          <p className="text-neutral-700 dark:text-neutral-200">
+            <span className="font-medium">{funcLabel}:</span> {formattedVal}
+          </p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+            {t("presentationView.aggTooltipSampleSize")} = {p.metrics.count} | {t("presentationView.aggTooltipStd")} = {stdVal}
+          </p>
+        </div>
+      );
+    };
     const stackByIdx = stackByCol ? cols.indexOf(stackByCol) : -1;
     const stackedBarData = (chartType === "stackedBar" && xCol && stackByCol && yCol && xIdx >= 0 && yIdx >= 0 && stackByIdx >= 0 && rows.length >= 2) ? (() => {
       const xVals = Array.from(new Set(rows.slice(1).map((r) => r[xIdx] ??"")));
@@ -284,6 +333,9 @@ export function PresentationView({
     const visualizationContext = [
       selectedDataset ? `${t("presentationView.contextDatasetLabel")} ${selectedDataset.name}, ${rows.length} ${t("transformTab.rowsUnit")}, ${cols.length} ${t("transformTab.columnsUnit")}.` : "",
       `${t("presentationView.contextChartTypeLabel")} ${chartType}.`,
+      (chartType === "bar" || chartType === "barH" || chartType === "line") && yCol && numericCols.includes(yCol)
+        ? `${t("presentationView.contextAggregationLabel")} ${t("presentationView.aggLabel." + yAggregation)}.`
+        : "",
       (chartType === "scatter" || chartType === "line" || chartType === "area") && xCol && yCol
         ? `${t("presentationView.axisXLabel")}: ${xCol}, ${t("presentationView.axisYLabel")}: ${yCol}. ${t("presentationView.contextPointsCountLabel")} ${chartData.length}.`
         : "",
@@ -313,7 +365,7 @@ export function PresentationView({
       { label: t("presentationView.quickPromptHowToReadLabel"), systemHint: `${t("presentationView.quickPromptHowToReadHint")} ${aiAnswerLangHint()}`, userMessage: t("presentationView.quickPromptHowToReadUserMessage") },
     ];
 
-    const hasExportableChart = (chartType === "scatter" && chartData.length > 0) || (chartType === "bar" && barChartData.length > 0) || (chartType === "barH" && barChartData.length > 0) || (chartType === "line" && lineData.length > 0) || (chartType === "pie" && pieData.length > 0) || (chartType === "donut" && pieData.length > 0) || (chartType === "area" && areaData.length > 0) || (chartType === "stackedBar" && stackedBarData.length > 0) || (chartType === "box" && boxChartData.length > 0) || (chartType === "histogram" && histChartData.length > 0) || (chartType === "density" && densityData.length > 0) || (chartType === "radar" && radarData.length > 0) || (chartType === "multiLine" && multiLineData.length > 0);
+    const hasExportableChart = (chartType === "scatter" && chartData.length > 0) || (chartType === "bar" && barChartData.length > 0) || (chartType === "barH" && barChartData.length > 0) || (chartType === "line" && lineChartData.length > 0) || (chartType === "pie" && pieData.length > 0) || (chartType === "donut" && pieData.length > 0) || (chartType === "area" && areaData.length > 0) || (chartType === "stackedBar" && stackedBarData.length > 0) || (chartType === "box" && boxChartData.length > 0) || (chartType === "histogram" && histChartData.length > 0) || (chartType === "density" && densityData.length > 0) || (chartType === "radar" && radarData.length > 0) || (chartType === "multiLine" && multiLineData.length > 0);
     const getChartSvgFromButton = (btn: HTMLElement): SVGElement | null => {
       const wrapper = btn.closest("[data-chart-export-wrapper]");
       if (!wrapper) return null;
@@ -418,6 +470,20 @@ export function PresentationView({
                 {numericCols.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
+            {(chartType === "bar" || chartType === "line") && yCol && numericCols.includes(yCol) && (
+              <div>
+                <label className="block text-sm font-medium mb-1">{t("presentationView.aggregationLabel")}</label>
+                <select value={yAggregation} onChange={(e) => setYAggregation(e.target.value as AggregateFunction)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
+                  <option value="mean">{t("presentationView.aggLabel.mean")}</option>
+                  <option value="sum">{t("presentationView.aggLabel.sum")}</option>
+                  <option value="count">{t("presentationView.aggLabel.count")}</option>
+                  <option value="median">{t("presentationView.aggLabel.median")}</option>
+                  <option value="std">{t("presentationView.aggLabel.std")}</option>
+                  <option value="min">{t("presentationView.aggLabel.min")}</option>
+                  <option value="max">{t("presentationView.aggLabel.max")}</option>
+                </select>
+              </div>
+            )}
             {chartType === "bar" && (
               <div>
                 <label className="block text-sm font-medium mb-1">{t("presentationView.sortAxisXLabel")}</label>
@@ -574,6 +640,27 @@ export function PresentationView({
               </select>
             </div>
             <div>
+              <label className="block text-sm font-medium mb-1">{t("presentationView.axisYNumericLabel")}</label>
+              <select value={yCol} onChange={(e) => setYCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
+                <option value="">{t("analysisView.selectPlaceholder")}</option>
+                {numericCols.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            {yCol && numericCols.includes(yCol) && (
+              <div>
+                <label className="block text-sm font-medium mb-1">{t("presentationView.aggregationLabel")}</label>
+                <select value={yAggregation} onChange={(e) => setYAggregation(e.target.value as AggregateFunction)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
+                  <option value="mean">{t("presentationView.aggLabel.mean")}</option>
+                  <option value="sum">{t("presentationView.aggLabel.sum")}</option>
+                  <option value="count">{t("presentationView.aggLabel.count")}</option>
+                  <option value="median">{t("presentationView.aggLabel.median")}</option>
+                  <option value="std">{t("presentationView.aggLabel.std")}</option>
+                  <option value="min">{t("presentationView.aggLabel.min")}</option>
+                  <option value="max">{t("presentationView.aggLabel.max")}</option>
+                </select>
+              </div>
+            )}
+            <div>
               <label className="block text-sm font-medium mb-1">{t("presentationView.sortAxisLabel")}</label>
               <select value={barSortOrder} onChange={(e) => setBarSortOrder(e.target.value as "none" | "asc" | "desc")} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
                 <option value="none">{t("presentationView.sortNone")}</option>
@@ -701,8 +788,8 @@ export function PresentationView({
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#0061bb" name={yCol && numericCols.includes(yCol) ? `${t("presentationView.barTotalPrefix")} ${yCol}` : t("presentationView.barCountLabel")} />
+                  {isAggregated ? <Tooltip content={renderAggTooltip} /> : <Tooltip />}
+                  <Bar dataKey="count" fill="#0061bb" name={isAggregated ? activeAggLegendName : t("presentationView.barCountLabel")} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -717,24 +804,24 @@ export function PresentationView({
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
                   <YAxis type="category" dataKey="name" width={100} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#0061bb" name={yCol && numericCols.includes(yCol) ? `${t("presentationView.barTotalPrefix")} ${yCol}` : t("presentationView.barCountLabel")} />
+                  {isAggregated ? <Tooltip content={renderAggTooltip} /> : <Tooltip />}
+                  <Bar dataKey="count" fill="#0061bb" name={isAggregated ? activeAggLegendName : t("presentationView.barCountLabel")} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
         )}
-        {chartType === "line" && lineData.length > 0 && (
+        {chartType === "line" && lineChartData.length > 0 && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
             <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={lineData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <LineChart data={lineChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="x" name={xCol} tick={{ fontSize: 11 }} />
                   <YAxis dataKey="y" name={yCol} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="y" stroke="#0061bb" strokeWidth={2} dot={{ r: 4 }} name={yCol || t("presentationView.lineDefaultValueName")} />
+                  {isAggregated ? <Tooltip content={renderAggTooltip} /> : <Tooltip />}
+                  <Line type="monotone" dataKey="y" stroke="#0061bb" strokeWidth={2} dot={{ r: 4 }} name={isAggregated ? activeAggLegendName : (yCol || t("presentationView.lineDefaultValueName"))} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -1087,7 +1174,7 @@ export function PresentationView({
           </div>
         )}
         {chartType === "bar" && xCol && barChartData.length === 0 && <p className="text-amber-700 dark:text-amber-300 text-sm bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">{t("presentationView.barNoDataPart1")} &quot;{xCol}&quot;{yCol ? ` ${t("presentationView.barNoDataYAxisSuffix")} ${yCol})` : ""}. {t("presentationView.barNoDataPart2")}</p>}
-        {chartType === "line" && (!xCol || !yCol || lineData.length === 0) && <p className="text-neutral-500 text-sm">{t("presentationView.lineEmptyHint")}</p>}
+        {chartType === "line" && (!xCol || !yCol || lineChartData.length === 0) && <p className="text-neutral-500 text-sm">{t("presentationView.lineEmptyHint")}</p>}
         {chartType === "area" && (!xCol || !yCol || areaData.length === 0) && <p className="text-neutral-500 text-sm">{t("presentationView.areaEmptyHint")}</p>}
         {chartType === "stackedBar" && (!xCol || !stackByCol || !yCol || stackedBarData.length === 0) && <p className="text-neutral-500 text-sm">{t("presentationView.stackedBarEmptyHint")}</p>}
         {chartType === "pie" && (!xCol || pieData.length === 0) && <p className="text-neutral-500 text-sm">{t("presentationView.pieEmptyHint")}</p>}
