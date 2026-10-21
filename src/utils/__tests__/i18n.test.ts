@@ -101,4 +101,63 @@ describe("i18n Core Engine", () => {
       expect(t("transformTab.resultRecode", { recoded: 5, total: 10 })).toContain("10");
     });
   });
+
+  describe("Aggregation Engine i18n keys", () => {
+    const requiredKeys = [
+      "presentationView.aggregationLabel",
+      "presentationView.aggLabel.mean",
+      "presentationView.aggLabel.sum",
+      "presentationView.aggLabel.count",
+      "presentationView.aggLabel.median",
+      "presentationView.aggLabel.std",
+      "presentationView.aggLabel.min",
+      "presentationView.aggLabel.max",
+      "presentationView.ofPreposition",
+      "presentationView.aggTooltipSampleSize",
+      "presentationView.aggTooltipStd",
+      "presentationView.contextAggregationLabel",
+    ];
+
+    it("has all aggregation keys defined in both English and Vietnamese", () => {
+      for (const key of requiredKeys) {
+        setLocale("en");
+        const enVal = t(key);
+        expect(enVal, `Missing English key: ${key}`).not.toBe(key);
+
+        setLocale("vi");
+        const viVal = t(key);
+        expect(viVal, `Missing Vietnamese key: ${key}`).not.toBe(key);
+      }
+    });
+
+    it("verifies accurate translation values for aggregation keys", () => {
+      setLocale("en");
+      expect(t("presentationView.aggregationLabel")).toBe("Aggregation");
+      expect(t("presentationView.aggLabel.mean")).toBe("Mean");
+      expect(t("presentationView.aggLabel.sum")).toBe("Sum");
+      expect(t("presentationView.aggLabel.count")).toBe("Count");
+      expect(t("presentationView.aggLabel.median")).toBe("Median");
+      expect(t("presentationView.aggLabel.std")).toBe("Std Dev");
+      expect(t("presentationView.aggLabel.min")).toBe("Min");
+      expect(t("presentationView.aggLabel.max")).toBe("Max");
+      expect(t("presentationView.ofPreposition")).toBe("of");
+      expect(t("presentationView.aggTooltipSampleSize")).toBe("n");
+      expect(t("presentationView.aggTooltipStd")).toBe("s");
+      expect(t("presentationView.contextAggregationLabel")).toBe("Aggregation:");
+
+      setLocale("vi");
+      expect(t("presentationView.aggregationLabel")).toBe("Phép gộp");
+      expect(t("presentationView.aggLabel.mean")).toBe("Trung bình");
+      expect(t("presentationView.aggLabel.sum")).toBe("Tổng");
+      expect(t("presentationView.aggLabel.count")).toBe("Đếm");
+      expect(t("presentationView.aggLabel.median")).toBe("Trung vị");
+      expect(t("presentationView.aggLabel.std")).toBe("Độ lệch chuẩn");
+      expect(t("presentationView.aggLabel.min")).toBe("Nhỏ nhất");
+      expect(t("presentationView.aggLabel.max")).toBe("Lớn nhất");
+      expect(t("presentationView.ofPreposition")).toBe("của");
+      expect(t("presentationView.aggTooltipSampleSize")).toBe("n");
+      expect(t("presentationView.aggTooltipStd")).toBe("s");
+      expect(t("presentationView.contextAggregationLabel")).toBe("Phép gộp:");
+    });
+  });
 });
