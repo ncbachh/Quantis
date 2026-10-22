@@ -96,3 +96,40 @@ export interface AIRecommendation {
   message: string;
   createdAt: string;
 }
+
+
+export type BarMode = "clustered" | "stacked";
+export type ErrorBarType = "none" | "ci95" | "se" | "sd";
+export type ColorPaletteName = "academic" | "colorblind" | "grayscale";
+
+export interface ChartConfig {
+  xCol: string;
+  yCol: string;
+  legendCol: string;
+  aggregation: import("./utils/aggregation").AggregateFunction;
+  barMode: BarMode;
+  errorBar: ErrorBarType;
+  palette: ColorPaletteName;
+  titleOverride: string;
+  subtitle: string;
+  showDataLabels: boolean;
+  decimals: number;
+  exportBackground: "white" | "transparent";
+  exportScale: 3 | 4;
+}
+
+export const DEFAULT_CHART_CONFIG: ChartConfig = {
+  xCol: "",
+  yCol: "",
+  legendCol: "",
+  aggregation: "mean",
+  barMode: "clustered",
+  errorBar: "ci95",
+  palette: "academic",
+  titleOverride: "",
+  subtitle: "",
+  showDataLabels: false,
+  decimals: 2,
+  exportBackground: "white",
+  exportScale: 3,
+};
