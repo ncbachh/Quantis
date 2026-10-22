@@ -31,8 +31,8 @@ vi.mock("recharts", async (importOriginal) => {
     CartesianGrid: () => null,
     Legend: () => null,
     Tooltip: () => <div data-testid="tooltip" />,
-    Bar: ({ name, dataKey }: any) => (
-      <div data-testid="bar-series" data-name={name} data-key={dataKey}>
+    Bar: ({ name, dataKey, stackId }: any) => (
+      <div data-testid="bar-series" data-name={name} data-key={dataKey} data-stack-id={stackId}>
         {name}
       </div>
     ),
@@ -41,7 +41,11 @@ vi.mock("recharts", async (importOriginal) => {
         {name}
       </div>
     ),
-    Scatter: () => null,
+    Scatter: ({ name, data }: any) => (
+      <div data-testid="scatter-series" data-name={name} data-points={JSON.stringify(data)}>
+        {name}
+      </div>
+    ),
     Pie: () => null,
     ErrorBar: () => null,
   };
@@ -54,6 +58,13 @@ describe("PresentationView Component — Aggregation Integration", () => {
     rows: 4,
     columns: 2,
     columnNames: ["Department", "Score"],
+    preview: [
+      ["Department", "Score"],
+      ["Sales", "10"],
+      ["Sales", "20"],
+      ["Marketing", "30"],
+      ["Marketing", "40"],
+    ],
     data: [
       ["Department", "Score"],
       ["Sales", "10"],
@@ -77,6 +88,65 @@ describe("PresentationView Component — Aggregation Integration", () => {
         measure: "scale",
         decimals: 2,
         align: "right",
+      },
+    },
+    sourceFormat: "csv",
+    createdAt: "2026-10-21T00:00:00Z",
+    updatedAt: "2026-10-21T00:00:00Z",
+  };
+
+  const groupedDataset: Dataset = {
+    id: "ds_pres_grouped",
+    name: "Survey Scores by Gender",
+    rows: 4,
+    columns: 4,
+    columnNames: ["Department", "Score", "Age", "Gender"],
+    preview: [
+      ["Department", "Score", "Age", "Gender"],
+      ["Sales", "10", "25", "F"],
+      ["Sales", "20", "30", "M"],
+      ["Marketing", "30", "35", "F"],
+      ["Marketing", "40", "40", "M"],
+    ],
+    data: [
+      ["Department", "Score", "Age", "Gender"],
+      ["Sales", "10", "25", "F"],
+      ["Sales", "20", "30", "M"],
+      ["Marketing", "30", "35", "F"],
+      ["Marketing", "40", "40", "M"],
+    ],
+    variables: {
+      Department: {
+        name: "Department",
+        label: "Phòng ban",
+        type: "string",
+        measure: "nominal",
+        decimals: 0,
+        align: "left",
+      },
+      Score: {
+        name: "Score",
+        label: "Điểm số",
+        type: "numeric",
+        measure: "scale",
+        decimals: 2,
+        align: "right",
+      },
+      Age: {
+        name: "Age",
+        label: "Độ tuổi",
+        type: "numeric",
+        measure: "scale",
+        decimals: 0,
+        align: "right",
+      },
+      Gender: {
+        name: "Gender",
+        label: "Giới tính",
+        type: "string",
+        measure: "nominal",
+        decimals: 0,
+        align: "left",
       },
     },
     sourceFormat: "csv",
@@ -261,5 +331,89 @@ describe("PresentationView Component — Aggregation Integration", () => {
     expect(html).toContain('&quot;count&quot;:2');
     expect(html).toContain('&quot;ci95Lower&quot;:');
     expect(html).toContain('&quot;ci95Upper&quot;:');
+  });
+
+  describe("Legend and Multi-series Integration", () => {
+    it("renders N series on Bar chart when legendCol is configured (clustered default)", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={groupedDataset}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            legendCol: "Gender",
+            barMode: "clustered",
+          }}
+        />
+      );
+
+      // Should render a Bar element for each distinct gender value: F and M
+      expect(html).toContain('data-key="F"');
+      expect(html).toContain('data-key="M"');
+      // In clustered mode, stackId is not set
+      expect(html).not.toContain('data-stack-id="stack"');
+    });
+
+    it("applies stackId on Bar chart when barMode is stacked", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={groupedDataset}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            legendCol: "Gender",
+            barMode: "stacked",
+          }}
+        />
+      );
+
+      expect(html).toContain('data-key="F"');
+      expect(html).toContain('data-key="M"');
+      expect(html).toContain('data-stack-id="stack"');
+    });
+
+    it("renders N lines on Line chart when legendCol is configured", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={groupedDataset}
+          chartType="line"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            legendCol: "Gender",
+          }}
+        />
+      );
+
+      expect(html).toContain('data-testid="line-series" data-name="F"');
+      expect(html).toContain('data-testid="line-series" data-name="M"');
+    });
+
+    it("renders N scatters on Scatter chart when legendCol is configured", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={groupedDataset}
+          chartType="scatter"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Score",
+            yCol: "Age",
+            legendCol: "Gender",
+          }}
+        />
+      );
+
+      expect(html).toContain('data-testid="scatter-series" data-name="F"');
+      expect(html).toContain('data-testid="scatter-series" data-name="M"');
+    });
   });
 });

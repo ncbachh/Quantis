@@ -29,6 +29,8 @@ import {
 import type { Dataset, ChartConfig } from "@/types";
 import { DEFAULT_CHART_CONFIG } from "@/types";
 import { ChartInspectorPanel } from "./ChartInspectorPanel";
+import { pivotByLegend, getSeriesKeys } from "@/utils/seriesPivot";
+import { getPaletteColor } from "./colorPalettes";
 import type { PresentationTab, PresentationChartType } from "@/stores";
 import type {
   TTestResult,
@@ -347,6 +349,77 @@ export function PresentationView({
       }).filter((d) => multiLineYCols.some((c) => d[c] !== "" && d[c] !== undefined));
     })() : [];
     const crosstabResult: { rowLabels: string[]; colLabels: string[]; counts: number[][] } | null = (chartType === "crosstab" && crosstabCol1 && crosstabCol2 && rows.length >= 2) ? getCrosstab(rows, crosstabCol1, crosstabCol2) : null;
+
+        const hasLegend = Boolean(
+      isAcademicChart &&
+      chartConfig.legendCol &&
+      chartConfig.legendCol.trim() !== "" &&
+      cols.includes(chartConfig.legendCol) &&
+      chartConfig.legendCol !== xCol
+    );
+
+    const { pivotedBarData, pivotedLineData, legendSeriesKeys } = (() => {
+      if (!hasLegend || !xCol || xIdx < 0) {
+        return { pivotedBarData: [], pivotedLineData: [], legendSeriesKeys: [] };
+      }
+      const measureCol = (yCol && numericCols.includes(yCol)) ? yCol : (numericCols[0] || xCol);
+      const funcToUse = (yCol && numericCols.includes(yCol)) ? activeYAggregation : "count";
+      const multiAgg = aggregateData(rows, {
+        groupByCols: [xCol, chartConfig.legendCol],
+        measureCol,
+        func: funcToUse,
+        limit: 100,
+      });
+      const pivoted = pivotByLegend(multiAgg, chartConfig.legendCol, chartConfig.errorBar);
+      const keys = getSeriesKeys(pivoted);
+      const barDataList = pivoted.map((p) => ({
+        name: p.name,
+        ...p.series,
+        _errors: p.errors,
+      }));
+      const lineDataList = pivoted.map((p) => ({
+        name: p.name,
+        x: p.name,
+        ...p.series,
+        _errors: p.errors,
+      }));
+      return {
+        pivotedBarData: barDataList,
+        pivotedLineData: lineDataList,
+        legendSeriesKeys: keys,
+      };
+    })();
+
+    const groupedScatterData = (() => {
+      if (!hasLegend || !isScatter) {
+        return [];
+      }
+      const legIdx = cols.indexOf(chartConfig.legendCol);
+      if (legIdx < 0) return [];
+
+      const map = new Map<string, Array<{ x: number; y: number }>>();
+      for (let r = 1; r < rows.length; r++) {
+        const row = rows[r];
+        const legVal = String(row[legIdx] ?? "").trim();
+        if (!legVal) continue;
+        const xVal = numCell(row[xIdx]);
+        const yVal = numCell(row[yIdx]);
+        if (Number.isNaN(xVal) || Number.isNaN(yVal)) continue;
+
+        let list = map.get(legVal);
+        if (!list) {
+          list = [];
+          map.set(legVal, list);
+        }
+        list.push({ x: xVal, y: yVal });
+      }
+
+      const sortedKeys = Array.from(map.keys()).sort((a, b) => a.localeCompare(b));
+      return sortedKeys.map((key) => ({
+        key,
+        points: map.get(key)!,
+      }));
+    })();
 
     const visualizationContext = [
       selectedDataset ? `${t("presentationView.contextDatasetLabel")} ${selectedDataset.name}, ${rows.length} ${t("transformTab.rowsUnit")}, ${cols.length} ${t("transformTab.columnsUnit")}.` : "",
@@ -697,7 +770,7 @@ export function PresentationView({
         </div>
         <div className="flex gap-4 items-start w-full">
           <div className="flex-1 min-w-0">
-            {chartType === "scatter" && isScatter && chartData.length > 0 && (
+            {chartType === "scatter" && isScatter && (hasLegend ? groupedScatterData.length > 0 : chartData.length > 0) && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
             <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
@@ -707,7 +780,21 @@ export function PresentationView({
                   <XAxis dataKey="x" name={xCol} type="number" domain={["auto", "auto"]} label={{ value: xCol, position: "insideBottom", offset: -10 }} />
                   <YAxis dataKey="y" name={yCol} type="number" domain={["auto", "auto"]} label={{ value: yCol, angle: -90, position: "insideLeft", offset: 0 }} />
                   <Tooltip cursor={{ strokeDasharray: "3 3" }} />
-                  <Scatter data={chartData} fill="#0061bb" name={t("presentationView.scatterPointName")} />
+                  {hasLegend ? (
+                    <>
+                      <Legend />
+                      {groupedScatterData.map((grp, i) => (
+                        <Scatter
+                          key={grp.key}
+                          data={grp.points}
+                          fill={getPaletteColor(chartConfig.palette, i)}
+                          name={grp.key}
+                        />
+                      ))}
+                    </>
+                  ) : (
+                    <Scatter data={chartData} fill={getPaletteColor(chartConfig.palette, 0)} name={t("presentationView.scatterPointName")} />
+                  )}
                 </ScatterChart>
               </ResponsiveContainer>
             </div>
@@ -746,49 +833,96 @@ export function PresentationView({
             </div>
           );
         })()}
-        {chartType === "bar" && barDataSorted.length > 0 && (
+        {chartType === "bar" && (hasLegend ? pivotedBarData.length > 0 : barDataSorted.length > 0) && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
             <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barDataSorted} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <BarChart data={hasLegend ? pivotedBarData : barDataSorted} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
                   {isAggregated ? <Tooltip content={renderAggTooltip} /> : <Tooltip />}
-                  <Bar dataKey="count" fill="#0061bb" name={isAggregated ? activeAggLegendName : t("presentationView.barCountLabel")} />
+                  {hasLegend ? (
+                    <>
+                      <Legend />
+                      {legendSeriesKeys.map((key, i) => (
+                        <Bar
+                          key={key}
+                          dataKey={key}
+                          name={key}
+                          stackId={chartConfig.barMode === "stacked" ? "stack" : undefined}
+                          fill={getPaletteColor(chartConfig.palette, i)}
+                        />
+                      ))}
+                    </>
+                  ) : (
+                    <Bar dataKey="count" fill={getPaletteColor(chartConfig.palette, 0)} name={isAggregated ? activeAggLegendName : t("presentationView.barCountLabel")} />
+                  )}
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
         )}
-        {chartType === "barH" && xCol && barDataSorted.length > 0 && (
+        {chartType === "barH" && xCol && (hasLegend ? pivotedBarData.length > 0 : barDataSorted.length > 0) && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
             <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barDataSorted} layout="vertical" margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <BarChart data={hasLegend ? pivotedBarData : barDataSorted} layout="vertical" margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
                   <YAxis type="category" dataKey="name" width={100} />
                   {isAggregated ? <Tooltip content={renderAggTooltip} /> : <Tooltip />}
-                  <Bar dataKey="count" fill="#0061bb" name={isAggregated ? activeAggLegendName : t("presentationView.barCountLabel")} />
+                  {hasLegend ? (
+                    <>
+                      <Legend />
+                      {legendSeriesKeys.map((key, i) => (
+                        <Bar
+                          key={key}
+                          dataKey={key}
+                          name={key}
+                          stackId={chartConfig.barMode === "stacked" ? "stack" : undefined}
+                          fill={getPaletteColor(chartConfig.palette, i)}
+                        />
+                      ))}
+                    </>
+                  ) : (
+                    <Bar dataKey="count" fill={getPaletteColor(chartConfig.palette, 0)} name={isAggregated ? activeAggLegendName : t("presentationView.barCountLabel")} />
+                  )}
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
         )}
-        {chartType === "line" && lineChartData.length > 0 && (
+        {chartType === "line" && (hasLegend ? pivotedLineData.length > 0 : lineChartData.length > 0) && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
             <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={lineChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <LineChart data={hasLegend ? pivotedLineData : lineChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="x" name={xCol} tick={{ fontSize: 11 }} />
-                  <YAxis dataKey="y" name={yCol} tick={{ fontSize: 11 }} />
+                  <YAxis dataKey={hasLegend ? undefined : "y"} name={yCol} tick={{ fontSize: 11 }} />
                   {isAggregated ? <Tooltip content={renderAggTooltip} /> : <Tooltip />}
-                  <Line type="monotone" dataKey="y" stroke="#0061bb" strokeWidth={2} dot={{ r: 4 }} name={isAggregated ? activeAggLegendName : (yCol || t("presentationView.lineDefaultValueName"))} />
+                  {hasLegend ? (
+                    <>
+                      <Legend />
+                      {legendSeriesKeys.map((key, i) => (
+                        <Line
+                          key={key}
+                          type="monotone"
+                          dataKey={key}
+                          stroke={getPaletteColor(chartConfig.palette, i)}
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                          name={key}
+                        />
+                      ))}
+                    </>
+                  ) : (
+                    <Line type="monotone" dataKey="y" stroke={getPaletteColor(chartConfig.palette, 0)} strokeWidth={2} dot={{ r: 4 }} name={isAggregated ? activeAggLegendName : (yCol || t("presentationView.lineDefaultValueName"))} />
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             </div>
