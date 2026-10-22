@@ -379,12 +379,50 @@ export function PresentationView({
       if (!hasLegend || !xCol || xIdx < 0) {
         return { pivotedBarData: [], pivotedLineData: [], legendSeriesKeys: [] };
       }
-      const measureCol = (yCol && numericCols.includes(yCol)) ? yCol : (numericCols[0] || xCol);
-      const funcToUse = (yCol && numericCols.includes(yCol)) ? activeYAggregation : "count";
+
+      if (!isAggregated) {
+        const legIdx = cols.indexOf(chartConfig.legendCol);
+        if (legIdx < 0) return { pivotedBarData: [], pivotedLineData: [], legendSeriesKeys: [] };
+
+        const countsMap = new Map<string, Map<string, number>>();
+        const xOrder: string[] = [];
+        for (let r = 1; r < rows.length; r++) {
+          const row = rows[r];
+          const xVal = String(row[xIdx] ?? "").trim();
+          const legVal = String(row[legIdx] ?? "").trim();
+          if (!xVal || !legVal) continue;
+          if (!countsMap.has(xVal)) {
+            xOrder.push(xVal);
+            countsMap.set(xVal, new Map<string, number>());
+          }
+          const m = countsMap.get(xVal)!;
+          m.set(legVal, (m.get(legVal) || 0) + 1);
+        }
+
+        const allKeys = new Set<string>();
+        countsMap.forEach((m) => m.forEach((_, k) => allKeys.add(k)));
+        const keys = Array.from(allKeys).sort((a, b) => a.localeCompare(b));
+
+        const barDataList = xOrder.slice(0, 30).map((name) => {
+          const m = countsMap.get(name)!;
+          const item: Record<string, any> = { name, _errors: {} };
+          for (const k of keys) {
+            item[k] = m.get(k) || 0;
+          }
+          return item;
+        });
+
+        return {
+          pivotedBarData: barDataList,
+          pivotedLineData: barDataList.map((d) => ({ ...d, x: d.name })),
+          legendSeriesKeys: keys,
+        };
+      }
+
       const multiAgg = aggregateData(rows, {
         groupByCols: [xCol, chartConfig.legendCol],
-        measureCol,
-        func: funcToUse,
+        measureCol: yCol,
+        func: activeYAggregation,
         limit: 100,
       });
       const pivoted = pivotByLegend(multiAgg, chartConfig.legendCol, chartConfig.errorBar);
@@ -1480,7 +1518,7 @@ export function PresentationView({
             )}
           </div>
         )}
-        {chartType === "bar" && xCol && barChartData.length === 0 && <p className="text-amber-700 dark:text-amber-300 text-sm bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">{t("presentationView.barNoDataPart1")} &quot;{xCol}&quot;{yCol ? ` ${t("presentationView.barNoDataYAxisSuffix")} ${yCol})` : ""}. {t("presentationView.barNoDataPart2")}</p>}
+        {chartType === "bar" && xCol && (hasLegend ? pivotedBarData.length === 0 : barChartData.length === 0) && <p className="text-amber-700 dark:text-amber-300 text-sm bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">{t("presentationView.barNoDataPart1")} &quot;{xCol}&quot;{yCol ? ` ${t("presentationView.barNoDataYAxisSuffix")} ${yCol})` : ""}. {t("presentationView.barNoDataPart2")}</p>}
         {chartType === "line" && (!xCol || !yCol || lineChartData.length === 0) && <p className="text-neutral-500 text-sm">{t("presentationView.lineEmptyHint")}</p>}
         {chartType === "area" && (!xCol || !yCol || areaData.length === 0) && <p className="text-neutral-500 text-sm">{t("presentationView.areaEmptyHint")}</p>}
         {chartType === "stackedBar" && (!xCol || !stackByCol || !yCol || stackedBarData.length === 0) && <p className="text-neutral-500 text-sm">{t("presentationView.stackedBarEmptyHint")}</p>}
@@ -1492,7 +1530,7 @@ export function PresentationView({
         {chartType === "heatmap" && (!corrResult || corrResult.columnNames.length < 2) && <p className="text-neutral-500 text-sm">{t("presentationView.heatmapEmptyHint")}</p>}
         {chartType === "summary" && summaryStats.length === 0 && <p className="text-neutral-500 text-sm">{t("presentationView.summaryEmptyHint")}</p>}
         {chartType === "donut" && (!xCol || pieData.length === 0) && <p className="text-neutral-500 text-sm">{t("presentationView.donutEmptyHint")}</p>}
-        {chartType === "barH" && (!xCol || barChartData.length === 0) && <p className="text-neutral-500 text-sm">{t("presentationView.barHEmptyHint")}</p>}
+        {chartType === "barH" && (!xCol || (hasLegend ? pivotedBarData.length === 0 : barChartData.length === 0)) && <p className="text-neutral-500 text-sm">{t("presentationView.barHEmptyHint")}</p>}
         {chartType === "dashboard" && dashboardStats.length === 0 && !(dashboardCorrResult && dashboardCorrResult.columnNames.length >= 2) && <p className="text-neutral-500 text-sm">{t("presentationView.dashboardEmptyHint")}</p>}
           </div>
           {isAcademicChart && isInspectorOpen && (

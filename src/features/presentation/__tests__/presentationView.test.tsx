@@ -437,6 +437,27 @@ describe("PresentationView Component — Aggregation Integration", () => {
       expect(html).toContain('data-testid="scatter-series" data-name="F"');
       expect(html).toContain('data-testid="scatter-series" data-name="M"');
     });
+
+    it("renders clustered Bar chart for categorical frequency count when legendCol is configured without yCol", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={groupedDataset}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "",
+            legendCol: "Gender",
+            barMode: "clustered",
+          }}
+        />
+      );
+
+      expect(html).toContain('data-key="F"');
+      expect(html).toContain('data-key="M"');
+      expect(html).toContain('data-testid="bar-chart"');
+    });
   });
 
   describe("Error Bars on Academic Charts", () => {
