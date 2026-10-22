@@ -916,5 +916,19 @@ describe("PresentationView Component — Aggregation Integration", () => {
       expect(toolbarPart).not.toContain(t("presentationView.groupVarXLabel"));
       expect(toolbarPart).not.toContain(t("presentationView.numericVarYLabel"));
     });
+
+    it("does not render inline toolbar blocks for heatmap", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="heatmap"
+          setChartType={() => {}}
+        />
+      );
+      const [toolbarPart] = html.split('data-testid="chart-inspector-panel"');
+      expect(toolbarPart).not.toContain(t("presentationView.coefficientLabel"));
+      expect(toolbarPart).not.toContain(t("presentationView.exportCsvButton"));
+    });
   });
 });

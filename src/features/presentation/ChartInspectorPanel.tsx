@@ -10,7 +10,7 @@ import {
   supportsBarMode,
   supportsErrorBars,
 } from "./chartCapabilities";
-import { ChevronDown, SlidersHorizontal, BarChart3, ShieldAlert, Type } from "lucide-react";
+import { ChevronDown, SlidersHorizontal, BarChart3, ShieldAlert, Type, Download } from "lucide-react";
 
 export interface ChartInspectorPanelProps {
   chartType: string;
@@ -671,6 +671,49 @@ export function ChartInspectorPanel({
                       {t("presentationView.showKdeLabel")}
                     </span>
                   </label>
+                )}
+
+                {chartType === "heatmap" && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block mb-1.5 font-medium text-neutral-600 dark:text-neutral-400">
+                        {t("presentationView.coefficientLabel")}
+                      </label>
+                      <div className="grid grid-cols-3 gap-1 rounded bg-neutral-100 dark:bg-neutral-800 p-0.5">
+                        {(["pearson", "spearman", "kendall"] as const).map((method) => (
+                          <button
+                            key={method}
+                            type="button"
+                            data-testid={`heatmap-method-${method}`}
+                            disabled={disabled}
+                            onClick={() =>
+                              onControlsChange({ heatmapCorrMethod: method })
+                            }
+                            className={`py-1 text-center rounded capitalize text-xs transition-colors ${
+                              controls.heatmapCorrMethod === method
+                                ? "bg-white dark:bg-neutral-700 font-medium text-neutral-900 dark:text-white shadow-sm"
+                                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+                            }`}
+                          >
+                            {method}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {onExportCsv && (
+                      <button
+                        type="button"
+                        data-testid="heatmap-export-csv-btn"
+                        disabled={disabled}
+                        onClick={onExportCsv}
+                        className="w-full rounded border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 text-xs flex items-center justify-center gap-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        {t("presentationView.exportCsvButton")}
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </details>

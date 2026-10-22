@@ -309,4 +309,21 @@ describe("ChartInspectorPanel Component", () => {
     expect(htmlBox).toContain('data-testid="box-group-col-select"');
     expect(htmlBox).toContain('data-testid="box-value-col-select"');
   });
+
+  it("renders heatmap method buttons and CSV export in panel", () => {
+    const htmlHeatmap = renderToStaticMarkup(
+      <ChartInspectorPanel
+        chartType="heatmap"
+        dataset={mockDataset}
+        config={DEFAULT_CHART_CONFIG}
+        controls={{ ...DEFAULT_CHART_CONTROLS, heatmapCorrMethod: "pearson" }}
+        onExportCsv={() => {}}
+        onChange={() => {}}
+      />
+    );
+    expect(htmlHeatmap).toContain('data-testid="heatmap-method-pearson"');
+    expect(htmlHeatmap).toContain('data-testid="heatmap-method-spearman"');
+    expect(htmlHeatmap).toContain('data-testid="heatmap-method-kendall"');
+    expect(htmlHeatmap).toContain('data-testid="heatmap-export-csv-btn"');
+  });
 });

@@ -781,33 +781,6 @@ export function PresentationView({
             </div>
           </div>
         )}
-        {chartType === "heatmap" && (
-          <div className="flex flex-wrap gap-4 mb-4">
-            <span className="text-sm font-medium">{t("presentationView.coefficientLabel")}</span>
-            <button type="button" onClick={() => setHeatmapCorrMethod("pearson")} className={`rounded-md px-3 py-1.5 text-sm ${heatmapCorrMethod === "pearson" ? "bg-brand text-white" : "border border-neutral-300 dark:border-neutral-600"}`}>Pearson</button>
-            <button type="button" onClick={() => setHeatmapCorrMethod("spearman")} className={`rounded-md px-3 py-1.5 text-sm ${heatmapCorrMethod === "spearman" ? "bg-brand text-white" : "border border-neutral-300 dark:border-neutral-600"}`}>Spearman</button>
-            <button type="button" onClick={() => setHeatmapCorrMethod("kendall")} className={`rounded-md px-3 py-1.5 text-sm ${heatmapCorrMethod === "kendall" ? "bg-brand text-white" : "border border-neutral-300 dark:border-neutral-600"}`}>Kendall</button>
-            {corrResult && corrResult.columnNames.length >= 2 && (
-              <button
-                type="button"
-                onClick={() => {
-                  const headers = ["", ...corrResult!.columnNames];
-                  const rows = corrResult!.matrix.map((row, i) => [corrResult!.columnNames[i], ...row.map((v) => v.toFixed(4))]);
-                  const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
-                  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
-                  const a = document.createElement("a");
-                  a.href = URL.createObjectURL(blob);
-                  a.download = `quantis-correlation-${heatmapCorrMethod}.csv`;
-                  a.click();
-                  URL.revokeObjectURL(a.href);
-                }}
-                className="rounded-md border border-neutral-300 dark:border-neutral-600 px-3 py-1.5 text-sm flex items-center gap-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-700"
-              >
-                <Download className="w-4 h-4" /> {t("presentationView.exportCsvButton")}
-              </button>
-            )}
-          </div>
-        )}
 
         {chartType === "density" && (
           <div className="flex flex-wrap gap-4 mb-4">
