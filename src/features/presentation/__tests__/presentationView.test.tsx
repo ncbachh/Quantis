@@ -573,7 +573,7 @@ describe("PresentationView Component — Aggregation Integration", () => {
         variables: {
           ...sampleDataset.variables,
           Score: {
-            ...sampleDataset.variables.Score,
+            ...sampleDataset.variables!.Score,
             label: "Customer Satisfaction",
           },
         },
