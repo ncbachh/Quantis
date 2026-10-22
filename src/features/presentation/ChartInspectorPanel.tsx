@@ -128,7 +128,7 @@ export function ChartInspectorPanel({
             {/* Y Axis */}
             <div>
               <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
-                {t("presentationView.axisYLabel")}
+                {t("presentationView.axisYNumericLabel")}
               </label>
               <select
                 data-testid="y-col-select"
@@ -146,27 +146,29 @@ export function ChartInspectorPanel({
               </select>
             </div>
 
-            {/* Aggregation */}
-            <div>
-              <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
-                {t("presentationView.aggregationLabel")}
-              </label>
-              <select
-                data-testid="aggregation-select"
-                disabled={disabled}
-                value={config.aggregation}
-                onChange={(e) =>
-                  onChange({ aggregation: e.target.value as AggregateFunction })
-                }
-                className="w-full px-2 py-1.5 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
-              >
-                {aggregationOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {t(opt.labelKey)}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Aggregation - only for bar, barH, line when Y is selected */}
+            {["bar", "barH", "line"].includes(chartType) && config.yCol && (
+              <div>
+                <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
+                  {t("presentationView.aggregationLabel")}
+                </label>
+                <select
+                  data-testid="aggregation-select"
+                  disabled={disabled}
+                  value={config.aggregation}
+                  onChange={(e) =>
+                    onChange({ aggregation: e.target.value as AggregateFunction })
+                  }
+                  className="w-full px-2 py-1.5 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                >
+                  {aggregationOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {t(opt.labelKey)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Legend (Grouping Field) - only for bar, line, scatter */}
             {supportsLegend && (

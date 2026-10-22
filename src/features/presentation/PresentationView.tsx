@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Download, Copy } from "lucide-react";
+import { Download, Copy, SlidersHorizontal } from "lucide-react";
 import {
   ResponsiveContainer,
   ScatterChart,
@@ -26,7 +26,9 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
 } from "recharts";
-import type { Dataset } from "@/types";
+import type { Dataset, ChartConfig } from "@/types";
+import { DEFAULT_CHART_CONFIG } from "@/types";
+import { ChartInspectorPanel } from "./ChartInspectorPanel";
 import type { PresentationTab, PresentationChartType } from "@/stores";
 import type {
   TTestResult,
@@ -70,6 +72,7 @@ export interface PresentationViewProps {
   initialXCol?: string;
   initialYCol?: string;
   initialYAggregation?: AggregateFunction;
+  initialConfig?: Partial<ChartConfig>;
 }
 
 export function PresentationView({
@@ -84,7 +87,16 @@ export function PresentationView({
   initialXCol = "",
   initialYCol = "",
   initialYAggregation = "mean",
+  initialConfig,
 }: PresentationViewProps) {
+  const [chartConfig, setChartConfig] = useState<ChartConfig>(() => ({
+    ...DEFAULT_CHART_CONFIG,
+    xCol: initialConfig?.xCol ?? initialXCol,
+    yCol: initialConfig?.yCol ?? initialYCol,
+    aggregation: initialConfig?.aggregation ?? initialYAggregation,
+    ...initialConfig,
+  }));
+  const [isInspectorOpen, setIsInspectorOpen] = useState(true);
   const [chartXCol, setChartXCol] = useState(initialXCol);
   const [chartYCol, setChartYCol] = useState(initialYCol);
   const [yAggregation, setYAggregation] = useState<AggregateFunction>(initialYAggregation);
@@ -133,10 +145,16 @@ export function PresentationView({
   if (tab === "visualization" && selectedDataset) {
     const rows = getDataRows(selectedDataset);
     const cols = selectedDataset.columnNames || [];
-    const xCol = chartXCol;
-    const setXCol = setChartXCol;
-    const yCol = chartYCol;
-    const setYCol = setChartYCol;
+    const isAcademicChart = ["bar", "barH", "line", "scatter"].includes(chartType);
+    const xCol = isAcademicChart ? chartConfig.xCol : chartXCol;
+    const setXCol = isAcademicChart
+      ? (val: string) => setChartConfig((c) => ({ ...c, xCol: val }))
+      : setChartXCol;
+    const yCol = isAcademicChart ? chartConfig.yCol : chartYCol;
+    const setYCol = isAcademicChart
+      ? (val: string) => setChartConfig((c) => ({ ...c, yCol: val }))
+      : setChartYCol;
+    const activeYAggregation = isAcademicChart ? chartConfig.aggregation : yAggregation;
     const numericCols = rows.length >= 2 ? cols.filter((c) => { const ci = rows[0].indexOf(c); const vals = rows.slice(1).map((r) => r[ci]); return vals.every((v) => v === "" || !Number.isNaN(Number(v))); }) : [];
     const xIdx = cols.indexOf(xCol);
     const yIdx = cols.indexOf(yCol);
@@ -151,7 +169,7 @@ export function PresentationView({
           ? aggregateData(rows, {
               groupByCols: [xCol],
               measureCol: yCol,
-              func: yAggregation,
+              func: activeYAggregation,
               limit: 30,
             }).map((g) => ({ name: g.name, count: g.value, metrics: g.metrics }))
           : (() => { const counts: Record<string, number> = {}; rows.slice(1).forEach((r) => { const v = r[xIdx] ??""; counts[v] = (counts[v] || 0) + 1; }); return Object.entries(counts).map(([name, count]) => ({ name, count })).slice(0, 24); })())
@@ -245,13 +263,13 @@ export function PresentationView({
       ? aggregateData(rows, {
           groupByCols: [xCol],
           measureCol: yCol,
-          func: yAggregation,
+          func: activeYAggregation,
           limit: 30,
         }).map((g) => ({ x: g.name, y: g.value, metrics: g.metrics }))
       : lineData;
     const isAggregated = Boolean(yCol && yIdx >= 0 && numericCols.includes(yCol));
     const activeAggLegendName = isAggregated
-      ? `${t("presentationView.aggLabel." + yAggregation)} ${t("presentationView.ofPreposition")} ${yCol}`
+      ? `${t("presentationView.aggLabel." + activeYAggregation)} ${t("presentationView.ofPreposition")} ${yCol}`
       : "";
 
     const renderAggTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
@@ -269,7 +287,7 @@ export function PresentationView({
       }
       const formattedVal = val !== undefined ? Number(val).toFixed(2) : "";
       const stdVal = Number(p.metrics.std).toFixed(2);
-      const funcLabel = t(`presentationView.aggLabel.${yAggregation}`);
+      const funcLabel = t(`presentationView.aggLabel.${activeYAggregation}`);
       return (
         <div className="rounded-lg border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-800 p-2 text-sm shadow-lg">
           <p className="font-medium text-neutral-900 dark:text-neutral-100">{label}</p>
@@ -334,7 +352,7 @@ export function PresentationView({
       selectedDataset ? `${t("presentationView.contextDatasetLabel")} ${selectedDataset.name}, ${rows.length} ${t("transformTab.rowsUnit")}, ${cols.length} ${t("transformTab.columnsUnit")}.` : "",
       `${t("presentationView.contextChartTypeLabel")} ${chartType}.`,
       (chartType === "bar" || chartType === "barH" || chartType === "line") && yCol && numericCols.includes(yCol)
-        ? `${t("presentationView.contextAggregationLabel")} ${t("presentationView.aggLabel." + yAggregation)}.`
+        ? `${t("presentationView.contextAggregationLabel")} ${t("presentationView.aggLabel." + activeYAggregation)}.`
         : "",
       (chartType === "scatter" || chartType === "line" || chartType === "area") && xCol && yCol
         ? `${t("presentationView.axisXLabel")}: ${xCol}, ${t("presentationView.axisYLabel")}: ${yCol}. ${t("presentationView.contextPointsCountLabel")} ${chartData.length}.`
@@ -454,7 +472,18 @@ export function PresentationView({
         <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 shrink-0">
           {({ bar: t("presentationView.chartTypeBar"), line: t("presentationView.chartTypeLine"), scatter: t("presentationView.chartTypeScatter"), histogram: t("presentationView.chartTypeHistogram"), box: t("presentationView.chartTypeBox"), heatmap: t("presentationView.chartTypeHeatmap"), pie: t("presentationView.chartTypePie"), stackedBar: t("presentationView.chartTypeStackedBar"), barH: t("presentationView.chartTypeBarH"), area: t("presentationView.chartTypeArea"), donut: t("presentationView.chartTypeDonut"), density: t("presentationView.chartTypeDensity"), radar: t("presentationView.chartTypeRadar") } as Record<string, string>)[chartType] ?? chartType}
         </span>
-        {(chartType === "scatter" || chartType === "bar" || chartType === "line" || chartType === "pie" || chartType === "area") && (
+        {isAcademicChart && (
+          <button
+            type="button"
+            onClick={() => setIsInspectorOpen((prev) => !prev)}
+            className="px-2.5 py-1 text-xs font-medium rounded-md border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5 transition-colors"
+            title={t("presentationView.inspectorTitle")}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5 text-primary-600" />
+            <span>{t("presentationView.inspectorTitle")}</span>
+          </button>
+        )}
+        {(chartType === "pie" || chartType === "area") && (
           <div className="flex flex-wrap gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium mb-1">{t("presentationView.axisXLabel")}</label>
@@ -470,31 +499,7 @@ export function PresentationView({
                 {numericCols.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            {(chartType === "bar" || chartType === "line") && yCol && numericCols.includes(yCol) && (
-              <div>
-                <label className="block text-sm font-medium mb-1">{t("presentationView.aggregationLabel")}</label>
-                <select value={yAggregation} onChange={(e) => setYAggregation(e.target.value as AggregateFunction)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-                  <option value="mean">{t("presentationView.aggLabel.mean")}</option>
-                  <option value="sum">{t("presentationView.aggLabel.sum")}</option>
-                  <option value="count">{t("presentationView.aggLabel.count")}</option>
-                  <option value="median">{t("presentationView.aggLabel.median")}</option>
-                  <option value="std">{t("presentationView.aggLabel.std")}</option>
-                  <option value="min">{t("presentationView.aggLabel.min")}</option>
-                  <option value="max">{t("presentationView.aggLabel.max")}</option>
-                </select>
-              </div>
-            )}
-            {chartType === "bar" && (
-              <div>
-                <label className="block text-sm font-medium mb-1">{t("presentationView.sortAxisXLabel")}</label>
-                <select value={barSortOrder} onChange={(e) => setBarSortOrder(e.target.value as "none" | "asc" | "desc")} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-                  <option value="none">{t("presentationView.sortNone")}</option>
-                  <option value="asc">{t("presentationView.sortAsc")}</option>
-                  <option value="desc">{t("presentationView.sortDesc")}</option>
-                </select>
-              </div>
-            )}
-          </div>
+            </div>
         )}
         {chartType === "stackedBar" && (
           <div className="flex flex-wrap gap-4 mb-4">
@@ -630,46 +635,6 @@ export function PresentationView({
             )}
           </div>
         )}
-        {chartType === "barH" && (
-          <div className="mb-4 flex flex-wrap items-end gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">{t("presentationView.axisCategoryLabel")}</label>
-              <select value={xCol} onChange={(e) => setXCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-                <option value="">{t("analysisView.selectPlaceholder")}</option>
-                {cols.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">{t("presentationView.axisYNumericLabel")}</label>
-              <select value={yCol} onChange={(e) => setYCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-                <option value="">{t("analysisView.selectPlaceholder")}</option>
-                {numericCols.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            {yCol && numericCols.includes(yCol) && (
-              <div>
-                <label className="block text-sm font-medium mb-1">{t("presentationView.aggregationLabel")}</label>
-                <select value={yAggregation} onChange={(e) => setYAggregation(e.target.value as AggregateFunction)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-                  <option value="mean">{t("presentationView.aggLabel.mean")}</option>
-                  <option value="sum">{t("presentationView.aggLabel.sum")}</option>
-                  <option value="count">{t("presentationView.aggLabel.count")}</option>
-                  <option value="median">{t("presentationView.aggLabel.median")}</option>
-                  <option value="std">{t("presentationView.aggLabel.std")}</option>
-                  <option value="min">{t("presentationView.aggLabel.min")}</option>
-                  <option value="max">{t("presentationView.aggLabel.max")}</option>
-                </select>
-              </div>
-            )}
-            <div>
-              <label className="block text-sm font-medium mb-1">{t("presentationView.sortAxisLabel")}</label>
-              <select value={barSortOrder} onChange={(e) => setBarSortOrder(e.target.value as "none" | "asc" | "desc")} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-                <option value="none">{t("presentationView.sortNone")}</option>
-                <option value="asc">{t("presentationView.sortAsc")}</option>
-                <option value="desc">{t("presentationView.sortDesc")}</option>
-              </select>
-            </div>
-          </div>
-        )}
         {chartType === "box" && (
           <div className="flex flex-wrap gap-4 mb-4">
             <div>
@@ -730,7 +695,9 @@ export function PresentationView({
             includeStandardResultPrompts={false}
           />
         </div>
-        {chartType === "scatter" && isScatter && chartData.length > 0 && (
+        <div className="flex gap-4 items-start w-full">
+          <div className="flex-1 min-w-0">
+            {chartType === "scatter" && isScatter && chartData.length > 0 && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
             <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
@@ -1187,6 +1154,16 @@ export function PresentationView({
         {chartType === "donut" && (!xCol || pieData.length === 0) && <p className="text-neutral-500 text-sm">{t("presentationView.donutEmptyHint")}</p>}
         {chartType === "barH" && (!xCol || barChartData.length === 0) && <p className="text-neutral-500 text-sm">{t("presentationView.barHEmptyHint")}</p>}
         {chartType === "dashboard" && dashboardStats.length === 0 && !(dashboardCorrResult && dashboardCorrResult.columnNames.length >= 2) && <p className="text-neutral-500 text-sm">{t("presentationView.dashboardEmptyHint")}</p>}
+          </div>
+          {isAcademicChart && isInspectorOpen && (
+            <ChartInspectorPanel
+              chartType={chartType}
+              dataset={selectedDataset ?? null}
+              config={chartConfig}
+              onChange={(patch) => setChartConfig((prev) => ({ ...prev, ...patch }))}
+            />
+          )}
+        </div>
       </div>
     );
   }
