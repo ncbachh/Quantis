@@ -858,5 +858,22 @@ describe("PresentationView Component — Aggregation Integration", () => {
         expect(html, `chartType ${chartType} should render chart inspector panel`).toContain('data-testid="chart-inspector-panel"');
       }
     });
+
+    it("does not render inline toolbar blocks for pie and donut", () => {
+      for (const chartType of ["pie", "donut"]) {
+        const html = renderToStaticMarkup(
+          <PresentationView
+            tab="visualization"
+            selectedDataset={sampleDataset}
+            chartType={chartType}
+            setChartType={() => {}}
+          />
+        );
+        const [toolbarPart] = html.split('data-testid="chart-inspector-panel"');
+        expect(toolbarPart).not.toContain(t("presentationView.pieHint"));
+        expect(toolbarPart).not.toContain(t("presentationView.binNumericLabel"));
+        expect(toolbarPart).not.toContain(t("presentationView.categoricalColumnLabel"));
+      }
+    });
   });
 });

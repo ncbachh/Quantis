@@ -730,7 +730,7 @@ export function PresentationView({
           <SlidersHorizontal className="w-3.5 h-3.5 text-primary-600" />
           <span>{t("presentationView.inspectorTitle")}</span>
         </button>
-        {(chartType === "pie" || chartType === "area") && (
+        {chartType === "area" && (
           <div className="flex flex-wrap gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium mb-1">{t("presentationView.axisXLabel")}</label>
@@ -826,62 +826,7 @@ export function PresentationView({
             )}
           </div>
         )}
-        {chartType === "pie" && (
-          <div className="mb-4 space-y-3">
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">{t("presentationView.pieHint")}</p>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={pieBinNumeric} onChange={(e) => setPieBinNumeric(e.target.checked)} className="rounded border-neutral-400" />
-              {t("presentationView.binNumericLabel")}
-            </label>
-            {pieBinNumeric && (
-              <div className="flex flex-wrap gap-4">
-                <div>
-                  <label className="block text-xs font-medium mb-1">{t("presentationView.numericColumnLabel")}</label>
-                  <select value={pieNumericCol} onChange={(e) => setPieNumericCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2 text-sm">
-                    <option value="">{t("analysisView.selectPlaceholder")}</option>
-                    {numericCols.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1">{t("presentationView.binCountLabel")}</label>
-                  <select value={pieBinCount} onChange={(e) => setPieBinCount(Number(e.target.value))} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2 text-sm">
-                    {[2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n} {t("presentationView.binCountUnit")}</option>)}
-                  </select>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-        {chartType === "donut" && (
-          <div className="mb-4 space-y-3">
-            <label className="block text-sm font-medium mb-1">{t("presentationView.categoricalColumnLabel")}</label>
-            <select value={xCol} onChange={(e) => { setXCol(e.target.value); setPieBinNumeric(false); }} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-              <option value="">{t("analysisView.selectPlaceholder")}</option>
-              {cols.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={pieBinNumeric} onChange={(e) => setPieBinNumeric(e.target.checked)} className="rounded border-neutral-400" />
-              {t("presentationView.binNumericLabel")}
-            </label>
-            {pieBinNumeric && (
-              <div className="flex flex-wrap gap-4">
-                <div>
-                  <label className="block text-xs font-medium mb-1">{t("presentationView.numericColumnLabel")}</label>
-                  <select value={pieNumericCol} onChange={(e) => setPieNumericCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2 text-sm">
-                    <option value="">{t("analysisView.selectPlaceholder")}</option>
-                    {numericCols.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium mb-1">{t("presentationView.binCountLabel")}</label>
-                  <select value={pieBinCount} onChange={(e) => setPieBinCount(Number(e.target.value))} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2 text-sm">
-                    {[2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n} {t("presentationView.binCountUnit")}</option>)}
-                  </select>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+
         {chartType === "box" && (
           <div className="flex flex-wrap gap-4 mb-4">
             <div>

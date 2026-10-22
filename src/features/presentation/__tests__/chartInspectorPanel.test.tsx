@@ -3,7 +3,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ChartInspectorPanel } from "../ChartInspectorPanel";
 import { setLocale, t } from "@/i18n";
-import { DEFAULT_CHART_CONFIG, type Dataset, type ChartConfig } from "@/types";
+import { DEFAULT_CHART_CONFIG, DEFAULT_CHART_CONTROLS, type Dataset, type ChartConfig } from "@/types";
 
 describe("ChartInspectorPanel Component", () => {
   beforeEach(() => {
@@ -233,5 +233,38 @@ describe("ChartInspectorPanel Component", () => {
         toHtmlEntities(t("presentationView.accordionLabels"))
       );
     }
+  });
+
+  it("renders pie and donut controls in panel", () => {
+    // Pie: X + Y selectors in Data & Axes, bin numeric toggle in Options
+    const htmlPie = renderToStaticMarkup(
+      <ChartInspectorPanel
+        chartType="pie"
+        dataset={mockDataset}
+        config={DEFAULT_CHART_CONFIG}
+        controls={{ ...DEFAULT_CHART_CONTROLS, pieBinNumeric: true }}
+        onChange={() => {}}
+      />
+    );
+    expect(htmlPie).toContain('data-testid="pie-x-col-select"');
+    expect(htmlPie).toContain('data-testid="pie-y-col-select"');
+    expect(htmlPie).toContain('data-testid="pie-bin-numeric-checkbox"');
+    expect(htmlPie).toContain('data-testid="pie-numeric-col-select"');
+    expect(htmlPie).toContain('data-testid="pie-bin-count-select"');
+
+    // Donut: categorical selector in Data & Axes, bin numeric in Options
+    const htmlDonut = renderToStaticMarkup(
+      <ChartInspectorPanel
+        chartType="donut"
+        dataset={mockDataset}
+        config={DEFAULT_CHART_CONFIG}
+        controls={{ ...DEFAULT_CHART_CONTROLS, pieBinNumeric: false }}
+        onChange={() => {}}
+      />
+    );
+    expect(htmlDonut).toContain('data-testid="donut-cat-col-select"');
+    expect(htmlDonut).not.toContain('data-testid="pie-y-col-select"');
+    expect(htmlDonut).toContain('data-testid="pie-bin-numeric-checkbox"');
+    expect(htmlDonut).not.toContain('data-testid="pie-numeric-col-select"');
   });
 });

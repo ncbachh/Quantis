@@ -431,6 +431,72 @@ export function ChartInspectorPanel({
               </summary>
               <div className="p-3 space-y-2.5 bg-white dark:bg-neutral-900">
                 {/* Non-academic Data & Axes controls populated in Tasks 4-10 */}
+                {chartType === "pie" && (
+                  <>
+                    <div>
+                      <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
+                        {t("presentationView.axisXLabel")}
+                      </label>
+                      <select
+                        data-testid="pie-x-col-select"
+                        disabled={disabled || columnNames.length === 0}
+                        value={controls.xCol}
+                        onChange={(e) => onControlsChange({ xCol: e.target.value })}
+                        className="w-full px-2 py-1.5 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      >
+                        <option value="">{t("presentationView.noneOption")}</option>
+                        {columnNames.map((col) => (
+                          <option key={col} value={col}>
+                            {getColDisplayName(col)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
+                        {t("presentationView.axisYNumericLabel")}
+                      </label>
+                      <select
+                        data-testid="pie-y-col-select"
+                        disabled={disabled || numericColumns.length === 0}
+                        value={controls.yCol}
+                        onChange={(e) => onControlsChange({ yCol: e.target.value })}
+                        className="w-full px-2 py-1.5 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      >
+                        <option value="">{t("presentationView.noneOption")}</option>
+                        {numericColumns.map((col) => (
+                          <option key={col} value={col}>
+                            {getColDisplayName(col)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {chartType === "donut" && (
+                  <div>
+                    <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
+                      {t("presentationView.categoricalColumnLabel")}
+                    </label>
+                    <select
+                      data-testid="donut-cat-col-select"
+                      disabled={disabled || columnNames.length === 0}
+                      value={controls.xCol}
+                      onChange={(e) =>
+                        onControlsChange({ xCol: e.target.value, pieBinNumeric: false })
+                      }
+                      className="w-full px-2 py-1.5 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    >
+                      <option value="">{t("presentationView.noneOption")}</option>
+                      {columnNames.map((col) => (
+                        <option key={col} value={col}>
+                          {getColDisplayName(col)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
             </details>
 
@@ -448,6 +514,77 @@ export function ChartInspectorPanel({
               </summary>
               <div className="p-3 space-y-2.5 bg-white dark:bg-neutral-900">
                 {/* Non-academic Options controls populated in Tasks 4-10 */}
+                {(chartType === "pie" || chartType === "donut") && (
+                  <div className="space-y-2.5">
+                    {chartType === "pie" && (
+                      <p className="text-neutral-500 dark:text-neutral-400 text-xs">
+                        {t("presentationView.pieHint")}
+                      </p>
+                    )}
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        data-testid="pie-bin-numeric-checkbox"
+                        disabled={disabled}
+                        checked={controls.pieBinNumeric}
+                        onChange={(e) =>
+                          onControlsChange({ pieBinNumeric: e.target.checked })
+                        }
+                        className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                      />
+                      <span className="font-medium text-neutral-700 dark:text-neutral-300">
+                        {t("presentationView.binNumericLabel")}
+                      </span>
+                    </label>
+
+                    {controls.pieBinNumeric && (
+                      <div className="space-y-2.5 pt-1">
+                        <div>
+                          <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
+                            {t("presentationView.numericColumnLabel")}
+                          </label>
+                          <select
+                            data-testid="pie-numeric-col-select"
+                            disabled={disabled || numericColumns.length === 0}
+                            value={controls.pieNumericCol}
+                            onChange={(e) =>
+                              onControlsChange({ pieNumericCol: e.target.value })
+                            }
+                            className="w-full px-2 py-1.5 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          >
+                            <option value="">{t("presentationView.noneOption")}</option>
+                            {numericColumns.map((col) => (
+                              <option key={col} value={col}>
+                                {getColDisplayName(col)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
+                            {t("presentationView.binCountLabel")}
+                          </label>
+                          <select
+                            data-testid="pie-bin-count-select"
+                            disabled={disabled}
+                            value={controls.pieBinCount}
+                            onChange={(e) =>
+                              onControlsChange({ pieBinCount: Number(e.target.value) })
+                            }
+                            className="w-full px-2 py-1.5 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          >
+                            {[2, 3, 4, 5, 6].map((n) => (
+                              <option key={n} value={n}>
+                                {n} {t("presentationView.binCountUnit")}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </details>
           </>
