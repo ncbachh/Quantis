@@ -26,8 +26,23 @@ vi.mock("recharts", async (importOriginal) => {
     ScatterChart: ({ children }: any) => <div data-testid="scatter-chart">{children}</div>,
     PieChart: ({ children }: any) => <div data-testid="pie-chart">{children}</div>,
     ComposedChart: ({ children }: any) => <div data-testid="composed-chart">{children}</div>,
-    XAxis: () => null,
-    YAxis: () => null,
+    XAxis: ({ domain, ticks, type, dataKey }: any) => (
+      <div
+        data-testid="x-axis"
+        data-type={type}
+        data-key={dataKey}
+        data-domain={domain ? JSON.stringify(domain) : undefined}
+        data-ticks={ticks ? JSON.stringify(ticks) : undefined}
+      />
+    ),
+    YAxis: ({ domain, ticks, dataKey }: any) => (
+      <div
+        data-testid="y-axis"
+        data-key={dataKey}
+        data-domain={domain ? JSON.stringify(domain) : undefined}
+        data-ticks={ticks ? JSON.stringify(ticks) : undefined}
+      />
+    ),
     CartesianGrid: () => null,
     Legend: () => null,
     Tooltip: () => <div data-testid="tooltip" />,
@@ -664,6 +679,143 @@ describe("PresentationView Component — Aggregation Integration", () => {
       );
 
       expect(html).not.toContain('data-testid="label-list"');
+    });
+  });
+
+  describe("Error Bar & Academic Axis Scaling", () => {
+    it("expands YAxis domain ceiling with headroom on vertical Bar chart with error bars", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            aggregation: "mean",
+            errorBar: "ci95",
+          }}
+        />
+      );
+
+      // In sampleDataset: Sales mean = 15, Marketing mean = 35.
+      // With CI95 error bars, domain ceiling must be strictly greater than max bar value (35).
+      expect(html).toContain('data-testid="y-axis"');
+      const domainMatch = html.match(/data-testid="y-axis"[^>]*data-domain="([^"]+)"/);
+      expect(domainMatch).not.toBeNull();
+      const domain = JSON.parse(domainMatch![1].replace(/&quot;/g, '"'));
+      expect(domain[0]).toBe(0);
+      expect(domain[1]).toBeGreaterThan(35);
+    });
+
+    it("attaches error property to single-series barChartData and renders ErrorBar", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            aggregation: "mean",
+            errorBar: "ci95",
+          }}
+        />
+      );
+
+      // Check bar chart data has error property
+      const chartDataMatch = html.match(/data-testid="bar-chart"[^>]*data-chart-data="([^"]+)"/);
+      expect(chartDataMatch).not.toBeNull();
+      const chartData = JSON.parse(chartDataMatch![1].replace(/&quot;/g, '"'));
+      expect(chartData.length).toBe(2);
+      expect(chartData[0].error).toBeDefined();
+      expect(Array.isArray(chartData[0].error)).toBe(true);
+
+      // ErrorBar rendered
+      expect(html).toContain('data-testid="error-bar"');
+      expect(html).toContain('data-error-key="error"');
+      expect(html).toContain('data-direction="y"');
+    });
+
+    it("expands XAxis domain ceiling with headroom on Horizontal Bar (barH) chart", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="barH"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            aggregation: "mean",
+            errorBar: "ci95",
+          }}
+        />
+      );
+
+      expect(html).toContain('data-testid="x-axis"');
+      const domainMatch = html.match(/data-testid="x-axis"[^>]*data-domain="([^"]+)"/);
+      expect(domainMatch).not.toBeNull();
+      const domain = JSON.parse(domainMatch![1].replace(/&quot;/g, '"'));
+      expect(domain[0]).toBe(0);
+      expect(domain[1]).toBeGreaterThan(35);
+    });
+
+    it("expands YAxis domain ceiling on multi-series clustered Bar chart (user reported bug reproduction)", () => {
+      const multiDataset: Dataset = {
+        id: "ds_multi_error_test",
+        name: "Survey",
+        rows: 4,
+        columns: 3,
+        columnNames: ["Name", "Group", "Score"],
+        preview: [
+          ["Name", "Group", "Score"],
+          ["A", "G1", "1.5"],
+          ["A", "G1", "1.5"],
+          ["A", "G2", "2.0"],
+          ["A", "G2", "2.0"],
+        ],
+        data: [
+          ["Name", "Group", "Score"],
+          ["A", "G1", "1.5"],
+          ["A", "G1", "1.5"],
+          ["A", "G2", "2.0"],
+          ["A", "G2", "2.0"],
+        ],
+        variables: {
+          Name: { name: "Name", label: "Name", type: "string", measure: "nominal", decimals: 0, align: "left" },
+          Group: { name: "Group", label: "Group", type: "string", measure: "nominal", decimals: 0, align: "left" },
+          Score: { name: "Score", label: "Score", type: "numeric", measure: "scale", decimals: 2, align: "right" },
+        },
+        sourceFormat: "csv",
+        createdAt: "2026-10-22",
+        updatedAt: "2026-10-22",
+      };
+
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={multiDataset}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Name",
+            legendCol: "Group",
+            yCol: "Score",
+            aggregation: "mean",
+            errorBar: "ci95",
+          }}
+        />
+      );
+
+      const domainMatch = html.match(/data-testid="y-axis"[^>]*data-domain="([^"]+)"/);
+      expect(domainMatch).not.toBeNull();
+      const domain = JSON.parse(domainMatch![1].replace(/&quot;/g, '"'));
+      expect(domain[0]).toBe(0);
+      // Even though highest bar is 2.0, ceiling must expand (e.g. 2.5) to provide breathing room
+      expect(domain[1]).toBeGreaterThan(2.0);
     });
   });
 });

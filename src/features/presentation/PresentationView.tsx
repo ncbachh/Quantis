@@ -31,6 +31,7 @@ import type { Dataset, ChartConfig } from "@/types";
 import { DEFAULT_CHART_CONFIG } from "@/types";
 import { ChartInspectorPanel } from "./ChartInspectorPanel";
 import { pivotByLegend, getSeriesKeys, calculateErrorOffsets } from "@/utils/seriesPivot";
+import { computeAxisScale } from "@/utils/chartScale";
 import { getPaletteColor } from "./colorPalettes";
 import type { PresentationTab, PresentationChartType } from "@/stores";
 import type {
@@ -174,7 +175,12 @@ export function PresentationView({
               measureCol: yCol,
               func: activeYAggregation,
               limit: 30,
-            }).map((g) => ({ name: g.name, count: g.value, metrics: g.metrics }))
+            }).map((g) => ({
+              name: g.name,
+              count: g.value,
+              metrics: g.metrics,
+              error: calculateErrorOffsets(g.metrics, chartConfig.errorBar),
+            }))
           : (() => { const counts: Record<string, number> = {}; rows.slice(1).forEach((r) => { const v = r[xIdx] ??""; counts[v] = (counts[v] || 0) + 1; }); return Object.entries(counts).map(([name, count]) => ({ name, count })).slice(0, 24); })())
       : barData;
     const barDataSorted = barSortOrder === "none" ? barChartData : [...barChartData].sort((a, b) => (barSortOrder === "asc" ? a.count - b.count : b.count - a.count));
@@ -418,6 +424,27 @@ export function PresentationView({
       activeYAggregation === "mean" &&
       chartConfig.errorBar !== "none" &&
       ["bar", "barH", "line"].includes(chartType)
+    );
+
+    const barScale = computeAxisScale(
+      hasLegend ? pivotedBarData : barDataSorted,
+      {
+        hasLegend,
+        legendKeys: legendSeriesKeys,
+        barMode: chartConfig.barMode,
+        includeErrors: showErrorBars,
+      },
+      { isBar: true, padRatio: 0.15 }
+    );
+
+    const lineScale = computeAxisScale(
+      hasLegend ? pivotedLineData : lineChartData,
+      {
+        hasLegend,
+        legendKeys: legendSeriesKeys,
+        includeErrors: showErrorBars,
+      },
+      { isBar: false, padRatio: 0.12 }
     );
 
     const autoTitle = (() => {
@@ -918,7 +945,7 @@ export function PresentationView({
                 <BarChart data={hasLegend ? pivotedBarData : barDataSorted} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
-                  <YAxis />
+                  <YAxis domain={barScale.domain} ticks={barScale.ticks} />
                   {isAggregated ? <Tooltip content={renderAggTooltip} /> : <Tooltip />}
                   {hasLegend ? (
                     <>
@@ -982,7 +1009,7 @@ export function PresentationView({
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={hasLegend ? pivotedBarData : barDataSorted} layout="vertical" margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
+                  <XAxis type="number" domain={barScale.domain} ticks={barScale.ticks} />
                   <YAxis type="category" dataKey="name" width={100} />
                   {isAggregated ? <Tooltip content={renderAggTooltip} /> : <Tooltip />}
                   {hasLegend ? (
@@ -1048,7 +1075,7 @@ export function PresentationView({
                 <LineChart data={hasLegend ? pivotedLineData : lineChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="x" name={xLabel} tick={{ fontSize: 11 }} />
-                  <YAxis dataKey={hasLegend ? undefined : "y"} name={yLabel} tick={{ fontSize: 11 }} />
+                  <YAxis dataKey={hasLegend ? undefined : "y"} name={yLabel} domain={lineScale.domain} ticks={lineScale.ticks} tick={{ fontSize: 11 }} />
                   {isAggregated ? <Tooltip content={renderAggTooltip} /> : <Tooltip />}
                   {hasLegend ? (
                     <>
