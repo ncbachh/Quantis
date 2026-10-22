@@ -875,5 +875,18 @@ describe("PresentationView Component — Aggregation Integration", () => {
         expect(toolbarPart).not.toContain(t("presentationView.categoricalColumnLabel"));
       }
     });
+
+    it("does not render inline toolbar blocks for area", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="area"
+          setChartType={() => {}}
+        />
+      );
+      const [toolbarPart] = html.split('data-testid="chart-inspector-panel"');
+      expect(toolbarPart).not.toContain(t("presentationView.axisYNumericLabel"));
+    });
   });
 });

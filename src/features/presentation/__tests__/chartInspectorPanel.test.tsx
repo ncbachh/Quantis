@@ -267,4 +267,18 @@ describe("ChartInspectorPanel Component", () => {
     expect(htmlDonut).toContain('data-testid="pie-bin-numeric-checkbox"');
     expect(htmlDonut).not.toContain('data-testid="pie-numeric-col-select"');
   });
+
+  it("renders area chart X and Y selectors in panel", () => {
+    const htmlArea = renderToStaticMarkup(
+      <ChartInspectorPanel
+        chartType="area"
+        dataset={mockDataset}
+        config={DEFAULT_CHART_CONFIG}
+        controls={DEFAULT_CHART_CONTROLS}
+        onChange={() => {}}
+      />
+    );
+    expect(htmlArea).toContain('data-testid="area-x-col-select"');
+    expect(htmlArea).toContain('data-testid="area-y-col-select"');
+  });
 });

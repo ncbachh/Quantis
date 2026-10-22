@@ -431,14 +431,14 @@ export function ChartInspectorPanel({
               </summary>
               <div className="p-3 space-y-2.5 bg-white dark:bg-neutral-900">
                 {/* Non-academic Data & Axes controls populated in Tasks 4-10 */}
-                {chartType === "pie" && (
+                {(chartType === "pie" || chartType === "area") && (
                   <>
                     <div>
                       <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
                         {t("presentationView.axisXLabel")}
                       </label>
                       <select
-                        data-testid="pie-x-col-select"
+                        data-testid={chartType === "pie" ? "pie-x-col-select" : "area-x-col-select"}
                         disabled={disabled || columnNames.length === 0}
                         value={controls.xCol}
                         onChange={(e) => onControlsChange({ xCol: e.target.value })}
@@ -457,7 +457,7 @@ export function ChartInspectorPanel({
                         {t("presentationView.axisYNumericLabel")}
                       </label>
                       <select
-                        data-testid="pie-y-col-select"
+                        data-testid={chartType === "pie" ? "pie-y-col-select" : "area-y-col-select"}
                         disabled={disabled || numericColumns.length === 0}
                         value={controls.yCol}
                         onChange={(e) => onControlsChange({ yCol: e.target.value })}
