@@ -49,6 +49,9 @@ vi.mock("recharts", async (importOriginal) => {
       </div>
     ),
     Pie: () => null,
+    LabelList: ({ dataKey, position }: any) => (
+      <div data-testid="label-list" data-key={dataKey} data-position={position} />
+    ),
     ErrorBar: ({ dataKey, direction }: any) => (
       <div data-testid="error-bar" data-error-key={dataKey} data-direction={direction} />
     ),
@@ -545,6 +548,122 @@ describe("PresentationView Component — Aggregation Integration", () => {
       expect(html).toContain('data-error-key="_err_F"');
       expect(html).toContain('data-error-key="_err_M"');
       expect(html).toContain('data-direction="y"');
+    });
+  });
+
+  describe("Smart Typography and Data Labels", () => {
+    it("generates auto title inheriting Variable Label for aggregated chart", () => {
+      const datasetWithLabels: Dataset = {
+        ...sampleDataset,
+        variables: {
+          ...sampleDataset.variables,
+          Score: {
+            ...sampleDataset.variables.Score,
+            label: "Customer Satisfaction",
+          },
+        },
+      };
+
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={datasetWithLabels}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            aggregation: "mean",
+          }}
+        />
+      );
+
+      expect(html).toContain('data-testid="chart-title"');
+      expect(html).toContain("Mean of Customer Satisfaction by Department");
+    });
+
+    it("includes Legend variable label in auto title when grouped", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={groupedDataset}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            legendCol: "Gender",
+            aggregation: "mean",
+          }}
+        />
+      );
+
+      expect(html).toContain('data-testid="chart-title"');
+      expect(html).toContain("Mean of Điểm số by Phòng ban and Giới tính");
+    });
+
+    it("respects titleOverride and renders subtitle", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            aggregation: "mean",
+            titleOverride: "Custom Publication Title",
+            subtitle: "Note: Error bars represent 95% CI (n = 350)",
+          }}
+        />
+      );
+
+      expect(html).toContain('data-testid="chart-title"');
+      expect(html).toContain("Custom Publication Title");
+      expect(html).not.toContain("Mean of Score by Department");
+      expect(html).toContain('data-testid="chart-subtitle"');
+      expect(html).toContain("Note: Error bars represent 95% CI (n = 350)");
+    });
+
+    it("renders LabelList when showDataLabels is true", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            aggregation: "mean",
+            showDataLabels: true,
+          }}
+        />
+      );
+
+      expect(html).toContain('data-testid="label-list"');
+      expect(html).toContain('data-key="count"');
+      expect(html).toContain('data-position="top"');
+    });
+
+    it("does not render LabelList when showDataLabels is false", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            aggregation: "mean",
+            showDataLabels: false,
+          }}
+        />
+      );
+
+      expect(html).not.toContain('data-testid="label-list"');
     });
   });
 });

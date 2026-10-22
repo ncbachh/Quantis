@@ -18,6 +18,7 @@ import {
   Cell,
   ComposedChart,
   ErrorBar,
+  LabelList,
   AreaChart,
   Area,
   RadarChart,
@@ -274,9 +275,14 @@ export function PresentationView({
           error: calculateErrorOffsets(g.metrics, chartConfig.errorBar),
         }))
       : lineData;
+    const variables = selectedDataset?.variables ?? {};
+    const xLabel = xCol ? (variables[xCol]?.label?.trim() || xCol) : "";
+    const yLabel = yCol ? (variables[yCol]?.label?.trim() || yCol) : "";
+    const legendLabel = chartConfig.legendCol ? (variables[chartConfig.legendCol]?.label?.trim() || chartConfig.legendCol) : "";
+
     const isAggregated = Boolean(yCol && yIdx >= 0 && numericCols.includes(yCol));
     const activeAggLegendName = isAggregated
-      ? `${t("presentationView.aggLabel." + activeYAggregation)} ${t("presentationView.ofPreposition")} ${yCol}`
+      ? `${t("presentationView.aggLabel." + activeYAggregation)} ${t("presentationView.ofPreposition")} ${yLabel}`
       : "";
 
     const renderAggTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
@@ -413,6 +419,38 @@ export function PresentationView({
       chartConfig.errorBar !== "none" &&
       ["bar", "barH", "line"].includes(chartType)
     );
+
+    const autoTitle = (() => {
+      if (!isAcademicChart) return "";
+      if (chartType === "scatter") {
+        if (!xLabel || !yLabel) return "";
+        const base = `${yLabel} vs ${xLabel}`;
+        return hasLegend ? `${base} ${t("presentationView.autoTitleAnd")} ${legendLabel}` : base;
+      }
+      if (isAggregated) {
+        const aggPrefix = activeYAggregation === "mean"
+          ? t("presentationView.autoTitleMeanOf")
+          : `${t("presentationView.aggLabel." + activeYAggregation)} ${t("presentationView.ofPreposition")}`;
+        const base = `${aggPrefix} ${yLabel} ${t("presentationView.autoTitleBy")} ${xLabel}`;
+        return hasLegend ? `${base} ${t("presentationView.autoTitleAnd")} ${legendLabel}` : base;
+      }
+      if (xLabel) {
+        return xLabel;
+      }
+      return "";
+    })();
+
+    const effectiveTitle = (chartConfig.titleOverride && chartConfig.titleOverride.trim() !== "")
+      ? chartConfig.titleOverride
+      : autoTitle;
+
+    const effectiveSubtitle = chartConfig.subtitle?.trim() || "";
+
+    const activeDecimals = chartConfig.decimals ?? (yCol && variables[yCol]?.decimals !== undefined ? variables[yCol].decimals : 2);
+    const formatDataLabel = (val: any) => {
+      if (val === null || val === undefined || val === "" || Number.isNaN(Number(val))) return "";
+      return Number(val).toFixed(activeDecimals);
+    };
 
     const groupedScatterData = (() => {
       if (!hasLegend || !isScatter) {
@@ -797,12 +835,19 @@ export function PresentationView({
             {chartType === "scatter" && isScatter && (hasLegend ? groupedScatterData.length > 0 : chartData.length > 0) && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
-            <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+            <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+              {(effectiveTitle || effectiveSubtitle) && (
+                <div className="mb-3 text-center" data-testid="chart-title-block">
+                  {effectiveTitle && <h3 data-testid="chart-title" className="text-base font-semibold text-neutral-800 dark:text-neutral-100">{effectiveTitle}</h3>}
+                  {effectiveSubtitle && <p data-testid="chart-subtitle" className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{effectiveSubtitle}</p>}
+                </div>
+              )}
+              <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid />
-                  <XAxis dataKey="x" name={xCol} type="number" domain={["auto", "auto"]} label={{ value: xCol, position: "insideBottom", offset: -10 }} />
-                  <YAxis dataKey="y" name={yCol} type="number" domain={["auto", "auto"]} label={{ value: yCol, angle: -90, position: "insideLeft", offset: 0 }} />
+                  <XAxis dataKey="x" name={xLabel} type="number" domain={["auto", "auto"]} label={{ value: xLabel, position: "insideBottom", offset: -10 }} />
+                  <YAxis dataKey="y" name={yLabel} type="number" domain={["auto", "auto"]} label={{ value: yLabel, angle: -90, position: "insideLeft", offset: 0 }} />
                   <Tooltip cursor={{ strokeDasharray: "3 3" }} />
                   {hasLegend ? (
                     <>
@@ -821,6 +866,7 @@ export function PresentationView({
                   )}
                 </ScatterChart>
               </ResponsiveContainer>
+              </div>
             </div>
           </div>
         )}
@@ -860,7 +906,14 @@ export function PresentationView({
         {chartType === "bar" && (hasLegend ? pivotedBarData.length > 0 : barDataSorted.length > 0) && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
-            <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+            <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+              {(effectiveTitle || effectiveSubtitle) && (
+                <div className="mb-3 text-center" data-testid="chart-title-block">
+                  {effectiveTitle && <h3 data-testid="chart-title" className="text-base font-semibold text-neutral-800 dark:text-neutral-100">{effectiveTitle}</h3>}
+                  {effectiveSubtitle && <p data-testid="chart-subtitle" className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{effectiveSubtitle}</p>}
+                </div>
+              )}
+              <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={hasLegend ? pivotedBarData : barDataSorted} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -887,6 +940,9 @@ export function PresentationView({
                               strokeWidth={1.5}
                             />
                           )}
+                          {chartConfig.showDataLabels && (
+                            <LabelList dataKey={key} position="top" formatter={formatDataLabel} />
+                          )}
                         </Bar>
                       ))}
                     </>
@@ -901,17 +957,28 @@ export function PresentationView({
                           strokeWidth={1.5}
                         />
                       )}
+                      {chartConfig.showDataLabels && (
+                        <LabelList dataKey="count" position="top" formatter={formatDataLabel} />
+                      )}
                     </Bar>
                   )}
                 </BarChart>
               </ResponsiveContainer>
+              </div>
             </div>
           </div>
         )}
         {chartType === "barH" && xCol && (hasLegend ? pivotedBarData.length > 0 : barDataSorted.length > 0) && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
-            <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+            <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+              {(effectiveTitle || effectiveSubtitle) && (
+                <div className="mb-3 text-center" data-testid="chart-title-block">
+                  {effectiveTitle && <h3 data-testid="chart-title" className="text-base font-semibold text-neutral-800 dark:text-neutral-100">{effectiveTitle}</h3>}
+                  {effectiveSubtitle && <p data-testid="chart-subtitle" className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{effectiveSubtitle}</p>}
+                </div>
+              )}
+              <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={hasLegend ? pivotedBarData : barDataSorted} layout="vertical" margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -938,6 +1005,9 @@ export function PresentationView({
                               strokeWidth={1.5}
                             />
                           )}
+                          {chartConfig.showDataLabels && (
+                            <LabelList dataKey={key} position="right" formatter={formatDataLabel} />
+                          )}
                         </Bar>
                       ))}
                     </>
@@ -952,22 +1022,33 @@ export function PresentationView({
                           strokeWidth={1.5}
                         />
                       )}
+                      {chartConfig.showDataLabels && (
+                        <LabelList dataKey="count" position="right" formatter={formatDataLabel} />
+                      )}
                     </Bar>
                   )}
                 </BarChart>
               </ResponsiveContainer>
+              </div>
             </div>
           </div>
         )}
         {chartType === "line" && (hasLegend ? pivotedLineData.length > 0 : lineChartData.length > 0) && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
-            <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+            <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+              {(effectiveTitle || effectiveSubtitle) && (
+                <div className="mb-3 text-center" data-testid="chart-title-block">
+                  {effectiveTitle && <h3 data-testid="chart-title" className="text-base font-semibold text-neutral-800 dark:text-neutral-100">{effectiveTitle}</h3>}
+                  {effectiveSubtitle && <p data-testid="chart-subtitle" className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{effectiveSubtitle}</p>}
+                </div>
+              )}
+              <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={hasLegend ? pivotedLineData : lineChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="x" name={xCol} tick={{ fontSize: 11 }} />
-                  <YAxis dataKey={hasLegend ? undefined : "y"} name={yCol} tick={{ fontSize: 11 }} />
+                  <XAxis dataKey="x" name={xLabel} tick={{ fontSize: 11 }} />
+                  <YAxis dataKey={hasLegend ? undefined : "y"} name={yLabel} tick={{ fontSize: 11 }} />
                   {isAggregated ? <Tooltip content={renderAggTooltip} /> : <Tooltip />}
                   {hasLegend ? (
                     <>
@@ -991,6 +1072,9 @@ export function PresentationView({
                               strokeWidth={1.5}
                             />
                           )}
+                          {chartConfig.showDataLabels && (
+                            <LabelList dataKey={key} position="top" formatter={formatDataLabel} />
+                          )}
                         </Line>
                       ))}
                     </>
@@ -1001,7 +1085,7 @@ export function PresentationView({
                       stroke={getPaletteColor(chartConfig.palette, 0)}
                       strokeWidth={2}
                       dot={{ r: 4 }}
-                      name={isAggregated ? activeAggLegendName : (yCol || t("presentationView.lineDefaultValueName"))}
+                      name={isAggregated ? activeAggLegendName : (yLabel || t("presentationView.lineDefaultValueName"))}
                     >
                       {showErrorBars && (
                         <ErrorBar
@@ -1012,10 +1096,14 @@ export function PresentationView({
                           strokeWidth={1.5}
                         />
                       )}
+                      {chartConfig.showDataLabels && (
+                        <LabelList dataKey="y" position="top" formatter={formatDataLabel} />
+                      )}
                     </Line>
                   )}
                 </LineChart>
               </ResponsiveContainer>
+              </div>
             </div>
           </div>
         )}
