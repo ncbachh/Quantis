@@ -15,7 +15,7 @@ export type ErrorBarType = "ci95" | "se" | "sd" | "none";
  * Calculates [lowOffset, highOffset] for a group given its aggregate metrics and requested error type.
  * When count < 2, the sample variance / standard error cannot be computed (collapses to [0, 0]).
  */
-function calculateErrorOffsets(
+export function calculateErrorOffsets(
   metrics: AggregateMetrics | undefined,
   errorType: ErrorBarType
 ): [number, number] {

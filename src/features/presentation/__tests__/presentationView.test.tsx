@@ -31,14 +31,16 @@ vi.mock("recharts", async (importOriginal) => {
     CartesianGrid: () => null,
     Legend: () => null,
     Tooltip: () => <div data-testid="tooltip" />,
-    Bar: ({ name, dataKey, stackId }: any) => (
+    Bar: ({ name, dataKey, stackId, children }: any) => (
       <div data-testid="bar-series" data-name={name} data-key={dataKey} data-stack-id={stackId}>
         {name}
+        {children}
       </div>
     ),
-    Line: ({ name, dataKey }: any) => (
+    Line: ({ name, dataKey, children }: any) => (
       <div data-testid="line-series" data-name={name} data-key={dataKey}>
         {name}
+        {children}
       </div>
     ),
     Scatter: ({ name, data }: any) => (
@@ -47,7 +49,9 @@ vi.mock("recharts", async (importOriginal) => {
       </div>
     ),
     Pie: () => null,
-    ErrorBar: () => null,
+    ErrorBar: ({ dataKey, direction }: any) => (
+      <div data-testid="error-bar" data-error-key={dataKey} data-direction={direction} />
+    ),
   };
 });
 
@@ -414,6 +418,133 @@ describe("PresentationView Component — Aggregation Integration", () => {
 
       expect(html).toContain('data-testid="scatter-series" data-name="F"');
       expect(html).toContain('data-testid="scatter-series" data-name="M"');
+    });
+  });
+
+  describe("Error Bars on Academic Charts", () => {
+    it("renders ErrorBar inside Bar when aggregation is mean and errorBar is ci95 (single series)", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            aggregation: "mean",
+            errorBar: "ci95",
+          }}
+        />
+      );
+
+      expect(html).toContain('data-testid="error-bar"');
+      expect(html).toContain('data-error-key="error"');
+      expect(html).toContain('data-direction="y"');
+    });
+
+    it("does not render ErrorBar when aggregation is not mean (e.g. sum)", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            aggregation: "sum",
+            errorBar: "ci95",
+          }}
+        />
+      );
+
+      expect(html).not.toContain('data-testid="error-bar"');
+    });
+
+    it("does not render ErrorBar when errorBar is none", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            aggregation: "mean",
+            errorBar: "none",
+          }}
+        />
+      );
+
+      expect(html).not.toContain('data-testid="error-bar"');
+    });
+
+    it("renders per-series ErrorBar for grouped Bar chart when legendCol is configured", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={groupedDataset}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            legendCol: "Gender",
+            aggregation: "mean",
+            errorBar: "se",
+          }}
+        />
+      );
+
+      expect(html).toContain('data-error-key="_err_F"');
+      expect(html).toContain('data-error-key="_err_M"');
+      expect(html).toContain('data-direction="y"');
+    });
+
+    it("renders ErrorBar with direction x on horizontal bar (barH)", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="barH"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            aggregation: "mean",
+            errorBar: "sd",
+          }}
+        />
+      );
+
+      expect(html).toContain('data-testid="error-bar"');
+      expect(html).toContain('data-error-key="error"');
+      expect(html).toContain('data-direction="x"');
+    });
+
+    it("renders ErrorBar inside Line series when aggregation is mean", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={groupedDataset}
+          chartType="line"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            legendCol: "Gender",
+            aggregation: "mean",
+            errorBar: "ci95",
+          }}
+        />
+      );
+
+      expect(html).toContain('data-testid="error-bar"');
+      expect(html).toContain('data-error-key="_err_F"');
+      expect(html).toContain('data-error-key="_err_M"');
+      expect(html).toContain('data-direction="y"');
     });
   });
 });

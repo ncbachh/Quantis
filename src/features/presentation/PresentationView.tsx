@@ -29,7 +29,7 @@ import {
 import type { Dataset, ChartConfig } from "@/types";
 import { DEFAULT_CHART_CONFIG } from "@/types";
 import { ChartInspectorPanel } from "./ChartInspectorPanel";
-import { pivotByLegend, getSeriesKeys } from "@/utils/seriesPivot";
+import { pivotByLegend, getSeriesKeys, calculateErrorOffsets } from "@/utils/seriesPivot";
 import { getPaletteColor } from "./colorPalettes";
 import type { PresentationTab, PresentationChartType } from "@/stores";
 import type {
@@ -267,7 +267,12 @@ export function PresentationView({
           measureCol: yCol,
           func: activeYAggregation,
           limit: 30,
-        }).map((g) => ({ x: g.name, y: g.value, metrics: g.metrics }))
+        }).map((g) => ({
+          x: g.name,
+          y: g.value,
+          metrics: g.metrics,
+          error: calculateErrorOffsets(g.metrics, chartConfig.errorBar),
+        }))
       : lineData;
     const isAggregated = Boolean(yCol && yIdx >= 0 && numericCols.includes(yCol));
     const activeAggLegendName = isAggregated
@@ -372,23 +377,42 @@ export function PresentationView({
       });
       const pivoted = pivotByLegend(multiAgg, chartConfig.legendCol, chartConfig.errorBar);
       const keys = getSeriesKeys(pivoted);
-      const barDataList = pivoted.map((p) => ({
-        name: p.name,
-        ...p.series,
-        _errors: p.errors,
-      }));
-      const lineDataList = pivoted.map((p) => ({
-        name: p.name,
-        x: p.name,
-        ...p.series,
-        _errors: p.errors,
-      }));
+      const barDataList = pivoted.map((p) => {
+        const item: Record<string, any> = {
+          name: p.name,
+          ...p.series,
+          _errors: p.errors,
+        };
+        for (const [k, err] of Object.entries(p.errors)) {
+          item[`_err_${k}`] = err;
+        }
+        return item;
+      });
+      const lineDataList = pivoted.map((p) => {
+        const item: Record<string, any> = {
+          name: p.name,
+          x: p.name,
+          ...p.series,
+          _errors: p.errors,
+        };
+        for (const [k, err] of Object.entries(p.errors)) {
+          item[`_err_${k}`] = err;
+        }
+        return item;
+      });
       return {
         pivotedBarData: barDataList,
         pivotedLineData: lineDataList,
         legendSeriesKeys: keys,
       };
     })();
+
+    const showErrorBars = Boolean(
+      isAggregated &&
+      activeYAggregation === "mean" &&
+      chartConfig.errorBar !== "none" &&
+      ["bar", "barH", "line"].includes(chartType)
+    );
 
     const groupedScatterData = (() => {
       if (!hasLegend || !isScatter) {
@@ -853,11 +877,31 @@ export function PresentationView({
                           name={key}
                           stackId={chartConfig.barMode === "stacked" ? "stack" : undefined}
                           fill={getPaletteColor(chartConfig.palette, i)}
-                        />
+                        >
+                          {showErrorBars && (
+                            <ErrorBar
+                              dataKey={`_err_${key}`}
+                              direction="y"
+                              width={4}
+                              stroke="#475569"
+                              strokeWidth={1.5}
+                            />
+                          )}
+                        </Bar>
                       ))}
                     </>
                   ) : (
-                    <Bar dataKey="count" fill={getPaletteColor(chartConfig.palette, 0)} name={isAggregated ? activeAggLegendName : t("presentationView.barCountLabel")} />
+                    <Bar dataKey="count" fill={getPaletteColor(chartConfig.palette, 0)} name={isAggregated ? activeAggLegendName : t("presentationView.barCountLabel")}>
+                      {showErrorBars && (
+                        <ErrorBar
+                          dataKey="error"
+                          direction="y"
+                          width={4}
+                          stroke="#475569"
+                          strokeWidth={1.5}
+                        />
+                      )}
+                    </Bar>
                   )}
                 </BarChart>
               </ResponsiveContainer>
@@ -884,11 +928,31 @@ export function PresentationView({
                           name={key}
                           stackId={chartConfig.barMode === "stacked" ? "stack" : undefined}
                           fill={getPaletteColor(chartConfig.palette, i)}
-                        />
+                        >
+                          {showErrorBars && (
+                            <ErrorBar
+                              dataKey={`_err_${key}`}
+                              direction="x"
+                              width={4}
+                              stroke="#475569"
+                              strokeWidth={1.5}
+                            />
+                          )}
+                        </Bar>
                       ))}
                     </>
                   ) : (
-                    <Bar dataKey="count" fill={getPaletteColor(chartConfig.palette, 0)} name={isAggregated ? activeAggLegendName : t("presentationView.barCountLabel")} />
+                    <Bar dataKey="count" fill={getPaletteColor(chartConfig.palette, 0)} name={isAggregated ? activeAggLegendName : t("presentationView.barCountLabel")}>
+                      {showErrorBars && (
+                        <ErrorBar
+                          dataKey="error"
+                          direction="x"
+                          width={4}
+                          stroke="#475569"
+                          strokeWidth={1.5}
+                        />
+                      )}
+                    </Bar>
                   )}
                 </BarChart>
               </ResponsiveContainer>
@@ -917,11 +981,38 @@ export function PresentationView({
                           strokeWidth={2}
                           dot={{ r: 4 }}
                           name={key}
-                        />
+                        >
+                          {showErrorBars && (
+                            <ErrorBar
+                              dataKey={`_err_${key}`}
+                              direction="y"
+                              width={4}
+                              stroke="#475569"
+                              strokeWidth={1.5}
+                            />
+                          )}
+                        </Line>
                       ))}
                     </>
                   ) : (
-                    <Line type="monotone" dataKey="y" stroke={getPaletteColor(chartConfig.palette, 0)} strokeWidth={2} dot={{ r: 4 }} name={isAggregated ? activeAggLegendName : (yCol || t("presentationView.lineDefaultValueName"))} />
+                    <Line
+                      type="monotone"
+                      dataKey="y"
+                      stroke={getPaletteColor(chartConfig.palette, 0)}
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      name={isAggregated ? activeAggLegendName : (yCol || t("presentationView.lineDefaultValueName"))}
+                    >
+                      {showErrorBars && (
+                        <ErrorBar
+                          dataKey="error"
+                          direction="y"
+                          width={4}
+                          stroke="#475569"
+                          strokeWidth={1.5}
+                        />
+                      )}
+                    </Line>
                   )}
                 </LineChart>
               </ResponsiveContainer>
