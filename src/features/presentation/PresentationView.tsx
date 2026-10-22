@@ -27,9 +27,14 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
 } from "recharts";
-import type { Dataset, ChartConfig } from "@/types";
+import type { Dataset, ChartConfig, ChartControls } from "@/types";
 import { DEFAULT_CHART_CONFIG } from "@/types";
 import { ChartInspectorPanel } from "./ChartInspectorPanel";
+import {
+  usesConfigAxes,
+  supportsLegend,
+  supportsAutoTitle,
+} from "./chartCapabilities";
 import { pivotByLegend, getSeriesKeys, calculateErrorOffsets } from "@/utils/seriesPivot";
 import { computeAxisScale } from "@/utils/chartScale";
 import { getPaletteColor } from "./colorPalettes";
@@ -149,16 +154,16 @@ export function PresentationView({
   if (tab === "visualization" && selectedDataset) {
     const rows = getDataRows(selectedDataset);
     const cols = selectedDataset.columnNames || [];
-    const isAcademicChart = ["bar", "barH", "line", "scatter"].includes(chartType);
-    const xCol = isAcademicChart ? chartConfig.xCol : chartXCol;
-    const setXCol = isAcademicChart
+    const hasConfigAxes = usesConfigAxes(chartType);
+    const xCol = hasConfigAxes ? chartConfig.xCol : chartXCol;
+    const setXCol = hasConfigAxes
       ? (val: string) => setChartConfig((c) => ({ ...c, xCol: val }))
       : setChartXCol;
-    const yCol = isAcademicChart ? chartConfig.yCol : chartYCol;
-    const setYCol = isAcademicChart
+    const yCol = hasConfigAxes ? chartConfig.yCol : chartYCol;
+    const setYCol = hasConfigAxes
       ? (val: string) => setChartConfig((c) => ({ ...c, yCol: val }))
       : setChartYCol;
-    const activeYAggregation = isAcademicChart ? chartConfig.aggregation : yAggregation;
+    const activeYAggregation = hasConfigAxes ? chartConfig.aggregation : yAggregation;
     const numericCols = rows.length >= 2 ? cols.filter((c) => { const ci = rows[0].indexOf(c); const vals = rows.slice(1).map((r) => r[ci]); return vals.every((v) => v === "" || !Number.isNaN(Number(v))); }) : [];
     const xIdx = cols.indexOf(xCol);
     const yIdx = cols.indexOf(yCol);
@@ -368,7 +373,7 @@ export function PresentationView({
     const crosstabResult: { rowLabels: string[]; colLabels: string[]; counts: number[][] } | null = (chartType === "crosstab" && crosstabCol1 && crosstabCol2 && rows.length >= 2) ? getCrosstab(rows, crosstabCol1, crosstabCol2) : null;
 
         const hasLegend = Boolean(
-      isAcademicChart &&
+      supportsLegend(chartType) &&
       chartConfig.legendCol &&
       chartConfig.legendCol.trim() !== "" &&
       cols.includes(chartConfig.legendCol) &&
@@ -486,7 +491,7 @@ export function PresentationView({
     );
 
     const autoTitle = (() => {
-      if (!isAcademicChart) return "";
+      if (!supportsAutoTitle(chartType)) return "";
       if (chartType === "scatter") {
         if (!xLabel || !yLabel) return "";
         const base = `${yLabel} vs ${xLabel}`;
@@ -658,6 +663,49 @@ export function PresentationView({
       img.onerror = () => URL.revokeObjectURL(url);
       img.src = url;
     };
+    const handleExportHeatmapCsv = () => {
+      if (!corrResult || corrResult.columnNames.length < 2) return;
+      const headers = ["", ...corrResult.columnNames];
+      const csvRows = corrResult.matrix.map((row, i) => [corrResult.columnNames[i], ...row.map((v) => v.toFixed(4))]);
+      const csv = [headers.join(","), ...csvRows.map((r) => r.join(","))].join("\n");
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `quantis-correlation-${heatmapCorrMethod}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+
+    const chartControls: ChartControls = {
+      xCol: chartXCol,
+      yCol: chartYCol,
+      histogramCol,
+      showHistogramDensity,
+      heatmapCorrMethod,
+      radarGroupCol,
+      radarNumericCols,
+      densityGroupCol,
+      densityValueCol,
+      pieBinNumeric,
+      pieBinCount,
+      pieNumericCol,
+    };
+
+    const handleControlsChange = (patch: Partial<ChartControls>) => {
+      if (patch.xCol !== undefined) setChartXCol(patch.xCol);
+      if (patch.yCol !== undefined) setChartYCol(patch.yCol);
+      if (patch.histogramCol !== undefined) setHistogramCol(patch.histogramCol);
+      if (patch.showHistogramDensity !== undefined) setShowHistogramDensity(patch.showHistogramDensity);
+      if (patch.heatmapCorrMethod !== undefined) setHeatmapCorrMethod(patch.heatmapCorrMethod);
+      if (patch.radarGroupCol !== undefined) setRadarGroupCol(patch.radarGroupCol);
+      if (patch.radarNumericCols !== undefined) setRadarNumericCols(patch.radarNumericCols);
+      if (patch.densityGroupCol !== undefined) setDensityGroupCol(patch.densityGroupCol);
+      if (patch.densityValueCol !== undefined) setDensityValueCol(patch.densityValueCol);
+      if (patch.pieBinNumeric !== undefined) setPieBinNumeric(patch.pieBinNumeric);
+      if (patch.pieBinCount !== undefined) setPieBinCount(patch.pieBinCount);
+      if (patch.pieNumericCol !== undefined) setPieNumericCol(patch.pieNumericCol);
+    };
+
     const chartExportIcons = hasExportableChart ? (
       <div className="absolute top-2 right-2 z-10 flex gap-1 rounded-lg bg-white/95 dark:bg-neutral-800/95 border border-neutral-200 dark:border-neutral-600 p-1.5 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
         <button type="button" onClick={handleExportPng} title={t("presentationView.savePngTitle")} className="p-1.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700"><Download className="w-4 h-4" /></button>
@@ -672,17 +720,16 @@ export function PresentationView({
         <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 shrink-0">
           {({ bar: t("presentationView.chartTypeBar"), line: t("presentationView.chartTypeLine"), scatter: t("presentationView.chartTypeScatter"), histogram: t("presentationView.chartTypeHistogram"), box: t("presentationView.chartTypeBox"), heatmap: t("presentationView.chartTypeHeatmap"), pie: t("presentationView.chartTypePie"), stackedBar: t("presentationView.chartTypeStackedBar"), barH: t("presentationView.chartTypeBarH"), area: t("presentationView.chartTypeArea"), donut: t("presentationView.chartTypeDonut"), density: t("presentationView.chartTypeDensity"), radar: t("presentationView.chartTypeRadar") } as Record<string, string>)[chartType] ?? chartType}
         </span>
-        {isAcademicChart && (
-          <button
-            type="button"
-            onClick={() => setIsInspectorOpen((prev) => !prev)}
-            className="px-2.5 py-1 text-xs font-medium rounded-md border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5 transition-colors"
-            title={t("presentationView.inspectorTitle")}
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5 text-primary-600" />
-            <span>{t("presentationView.inspectorTitle")}</span>
-          </button>
-        )}
+        <button
+          type="button"
+          data-testid="inspector-toggle-btn"
+          onClick={() => setIsInspectorOpen((prev) => !prev)}
+          className="px-2.5 py-1 text-xs font-medium rounded-md border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5 transition-colors"
+          title={t("presentationView.inspectorTitle")}
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5 text-primary-600" />
+          <span>{t("presentationView.inspectorTitle")}</span>
+        </button>
         {(chartType === "pie" || chartType === "area") && (
           <div className="flex flex-wrap gap-4 mb-4">
             <div>
@@ -1533,12 +1580,15 @@ export function PresentationView({
         {chartType === "barH" && (!xCol || (hasLegend ? pivotedBarData.length === 0 : barChartData.length === 0)) && <p className="text-neutral-500 text-sm">{t("presentationView.barHEmptyHint")}</p>}
         {chartType === "dashboard" && dashboardStats.length === 0 && !(dashboardCorrResult && dashboardCorrResult.columnNames.length >= 2) && <p className="text-neutral-500 text-sm">{t("presentationView.dashboardEmptyHint")}</p>}
           </div>
-          {isAcademicChart && isInspectorOpen && (
+          {isInspectorOpen && (
             <ChartInspectorPanel
               chartType={chartType}
               dataset={selectedDataset ?? null}
               config={chartConfig}
               onChange={(patch) => setChartConfig((prev) => ({ ...prev, ...patch }))}
+              controls={chartControls}
+              onControlsChange={handleControlsChange}
+              onExportCsv={chartType === "heatmap" ? handleExportHeatmapCsv : undefined}
             />
           )}
         </div>

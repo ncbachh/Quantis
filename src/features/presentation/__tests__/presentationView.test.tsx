@@ -839,4 +839,24 @@ describe("PresentationView Component — Aggregation Integration", () => {
       expect(domain[1]).toBeGreaterThan(2.0);
     });
   });
+
+  describe("Chart Inspector Panel Mounting", () => {
+    it("renders the inspector toggle button and panel for non-academic chart types", () => {
+      const nonAcademicCharts = ["pie", "donut", "histogram", "box", "heatmap", "area", "density", "radar"];
+
+      for (const chartType of nonAcademicCharts) {
+        const html = renderToStaticMarkup(
+          <PresentationView
+            tab="visualization"
+            selectedDataset={sampleDataset}
+            chartType={chartType}
+            setChartType={() => {}}
+          />
+        );
+
+        expect(html, `chartType ${chartType} should have inspector toggle button`).toContain('data-testid="inspector-toggle-btn"');
+        expect(html, `chartType ${chartType} should render chart inspector panel`).toContain('data-testid="chart-inspector-panel"');
+      }
+    });
+  });
 });
