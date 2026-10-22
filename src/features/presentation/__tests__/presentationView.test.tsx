@@ -888,5 +888,19 @@ describe("PresentationView Component — Aggregation Integration", () => {
       const [toolbarPart] = html.split('data-testid="chart-inspector-panel"');
       expect(toolbarPart).not.toContain(t("presentationView.axisYNumericLabel"));
     });
+
+    it("does not render inline toolbar blocks for histogram", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="histogram"
+          setChartType={() => {}}
+        />
+      );
+      const [toolbarPart] = html.split('data-testid="chart-inspector-panel"');
+      expect(toolbarPart).not.toContain(t("presentationView.distributionColumnLabel"));
+      expect(toolbarPart).not.toContain(t("presentationView.showKdeLabel"));
+    });
   });
 });

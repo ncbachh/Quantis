@@ -281,4 +281,18 @@ describe("ChartInspectorPanel Component", () => {
     expect(htmlArea).toContain('data-testid="area-x-col-select"');
     expect(htmlArea).toContain('data-testid="area-y-col-select"');
   });
+
+  it("renders histogram distribution column and KDE overlay toggle in panel", () => {
+    const htmlHist = renderToStaticMarkup(
+      <ChartInspectorPanel
+        chartType="histogram"
+        dataset={mockDataset}
+        config={DEFAULT_CHART_CONFIG}
+        controls={{ ...DEFAULT_CHART_CONTROLS, showHistogramDensity: true }}
+        onChange={() => {}}
+      />
+    );
+    expect(htmlHist).toContain('data-testid="histogram-col-select"');
+    expect(htmlHist).toContain('data-testid="histogram-kde-checkbox"');
+  });
 });

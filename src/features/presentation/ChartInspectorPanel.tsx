@@ -497,6 +497,30 @@ export function ChartInspectorPanel({
                     </select>
                   </div>
                 )}
+
+                {chartType === "histogram" && (
+                  <div>
+                    <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
+                      {t("presentationView.distributionColumnLabel")}
+                    </label>
+                    <select
+                      data-testid="histogram-col-select"
+                      disabled={disabled || numericColumns.length === 0}
+                      value={controls.histogramCol}
+                      onChange={(e) =>
+                        onControlsChange({ histogramCol: e.target.value })
+                      }
+                      className="w-full px-2 py-1.5 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    >
+                      <option value="">{t("presentationView.noneOption")}</option>
+                      {numericColumns.map((col) => (
+                        <option key={col} value={col}>
+                          {getColDisplayName(col)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
             </details>
 
@@ -584,6 +608,26 @@ export function ChartInspectorPanel({
                       </div>
                     )}
                   </div>
+                )}
+
+                {chartType === "histogram" && (
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      data-testid="histogram-kde-checkbox"
+                      disabled={disabled}
+                      checked={controls.showHistogramDensity}
+                      onChange={(e) =>
+                        onControlsChange({
+                          showHistogramDensity: e.target.checked,
+                        })
+                      }
+                      className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="font-medium text-neutral-700 dark:text-neutral-300">
+                      {t("presentationView.showKdeLabel")}
+                    </span>
+                  </label>
                 )}
               </div>
             </details>

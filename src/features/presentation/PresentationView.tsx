@@ -827,21 +827,6 @@ export function PresentationView({
             </div>
           </div>
         )}
-        {chartType === "histogram" && (
-          <div className="mb-4 flex flex-wrap items-center gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">{t("presentationView.distributionColumnLabel")}</label>
-              <select value={histogramCol} onChange={(e) => setHistogramCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-                <option value="">{t("analysisView.selectPlaceholder")}</option>
-                {numericCols.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <label className="flex items-center gap-2 cursor-pointer mt-6">
-              <input type="checkbox" checked={showHistogramDensity} onChange={(e) => setShowHistogramDensity(e.target.checked)} className="rounded border-neutral-400" />
-              <span className="text-sm text-neutral-700 dark:text-neutral-300">{t("presentationView.showKdeLabel")}</span>
-            </label>
-          </div>
-        )}
         {chartType === "density" && (
           <div className="flex flex-wrap gap-4 mb-4">
             <div>
