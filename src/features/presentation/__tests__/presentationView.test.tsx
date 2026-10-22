@@ -902,5 +902,19 @@ describe("PresentationView Component — Aggregation Integration", () => {
       expect(toolbarPart).not.toContain(t("presentationView.distributionColumnLabel"));
       expect(toolbarPart).not.toContain(t("presentationView.showKdeLabel"));
     });
+
+    it("does not render inline toolbar blocks for box", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="box"
+          setChartType={() => {}}
+        />
+      );
+      const [toolbarPart] = html.split('data-testid="chart-inspector-panel"');
+      expect(toolbarPart).not.toContain(t("presentationView.groupVarXLabel"));
+      expect(toolbarPart).not.toContain(t("presentationView.numericVarYLabel"));
+    });
   });
 });

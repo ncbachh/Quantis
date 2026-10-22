@@ -295,4 +295,18 @@ describe("ChartInspectorPanel Component", () => {
     expect(htmlHist).toContain('data-testid="histogram-col-select"');
     expect(htmlHist).toContain('data-testid="histogram-kde-checkbox"');
   });
+
+  it("renders box chart group and value variable selectors in panel", () => {
+    const htmlBox = renderToStaticMarkup(
+      <ChartInspectorPanel
+        chartType="box"
+        dataset={mockDataset}
+        config={DEFAULT_CHART_CONFIG}
+        controls={DEFAULT_CHART_CONTROLS}
+        onChange={() => {}}
+      />
+    );
+    expect(htmlBox).toContain('data-testid="box-group-col-select"');
+    expect(htmlBox).toContain('data-testid="box-value-col-select"');
+  });
 });

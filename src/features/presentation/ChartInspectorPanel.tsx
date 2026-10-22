@@ -521,6 +521,49 @@ export function ChartInspectorPanel({
                     </select>
                   </div>
                 )}
+
+                {chartType === "box" && (
+                  <>
+                    <div>
+                      <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
+                        {t("presentationView.groupVarXLabel")}
+                      </label>
+                      <select
+                        data-testid="box-group-col-select"
+                        disabled={disabled || columnNames.length === 0}
+                        value={controls.xCol}
+                        onChange={(e) => onControlsChange({ xCol: e.target.value })}
+                        className="w-full px-2 py-1.5 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      >
+                        <option value="">{t("presentationView.noneOption")}</option>
+                        {columnNames.map((col) => (
+                          <option key={col} value={col}>
+                            {getColDisplayName(col)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
+                        {t("presentationView.numericVarYLabel")}
+                      </label>
+                      <select
+                        data-testid="box-value-col-select"
+                        disabled={disabled || numericColumns.length === 0}
+                        value={controls.yCol}
+                        onChange={(e) => onControlsChange({ yCol: e.target.value })}
+                        className="w-full px-2 py-1.5 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      >
+                        <option value="">{t("presentationView.noneOption")}</option>
+                        {numericColumns.map((col) => (
+                          <option key={col} value={col}>
+                            {getColDisplayName(col)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
               </div>
             </details>
 

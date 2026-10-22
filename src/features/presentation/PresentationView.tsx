@@ -809,24 +809,6 @@ export function PresentationView({
           </div>
         )}
 
-        {chartType === "box" && (
-          <div className="flex flex-wrap gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">{t("presentationView.groupVarXLabel")}</label>
-              <select value={xCol} onChange={(e) => setXCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-                <option value="">{t("analysisView.selectPlaceholder")}</option>
-                {cols.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">{t("presentationView.numericVarYLabel")}</label>
-              <select value={yCol} onChange={(e) => setYCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-                <option value="">{t("analysisView.selectPlaceholder")}</option>
-                {numericCols.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-          </div>
-        )}
         {chartType === "density" && (
           <div className="flex flex-wrap gap-4 mb-4">
             <div>
