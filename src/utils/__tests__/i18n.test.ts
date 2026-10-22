@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { t, setLocale, getLocale } from "../../i18n";
+import { t, setLocale } from "../../i18n";
 
 describe("i18n Core Engine", () => {
   beforeEach(() => {
@@ -158,6 +158,57 @@ describe("i18n Core Engine", () => {
       expect(t("presentationView.aggTooltipSampleSize")).toBe("n");
       expect(t("presentationView.aggTooltipStd")).toBe("s");
       expect(t("presentationView.contextAggregationLabel")).toBe("Phép gộp:");
+    });
+  });
+
+  describe("Academic Visualization Suite i18n keys", () => {
+    const vizKeys = [
+      "presentationView.inspectorTitle",
+      "presentationView.accordionData",
+      "presentationView.accordionStyle",
+      "presentationView.accordionErrorBars",
+      "presentationView.accordionLabels",
+      "presentationView.accordionExport",
+      "presentationView.legendLabel",
+      "presentationView.noneOption",
+      "presentationView.barModeLabel",
+      "presentationView.barModeClustered",
+      "presentationView.barModeStacked",
+      "presentationView.errorBarLabel",
+      "presentationView.errorBarNone",
+      "presentationView.errorBarCi95",
+      "presentationView.errorBarSe",
+      "presentationView.errorBarSd",
+      "presentationView.errorBarMeanOnlyNotice",
+      "presentationView.showDataLabelsLabel",
+      "presentationView.decimalsLabel",
+      "presentationView.titleOverrideLabel",
+      "presentationView.titleOverridePlaceholder",
+      "presentationView.subtitleLabel",
+      "presentationView.subtitlePlaceholder",
+      "presentationView.exportBgLabel",
+      "presentationView.exportBgWhite",
+      "presentationView.exportBgTransparent",
+      "presentationView.exportScaleLabel",
+      "presentationView.autoTitleMeanOf",
+      "presentationView.autoTitleBy",
+      "presentationView.autoTitleAnd",
+      "presentationView.paletteLabel",
+      "presentationView.paletteAcademic",
+      "presentationView.paletteColorblind",
+      "presentationView.paletteGrayscale",
+    ];
+
+    it("has all visualization suite keys defined in both English and Vietnamese", () => {
+      for (const key of vizKeys) {
+        setLocale("en");
+        const enVal = t(key);
+        expect(enVal, `Missing English key: ${key}`).not.toBe(key);
+
+        setLocale("vi");
+        const viVal = t(key);
+        expect(viVal, `Missing Vietnamese key: ${key}`).not.toBe(key);
+      }
     });
   });
 });
