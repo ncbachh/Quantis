@@ -203,4 +203,35 @@ describe("ChartInspectorPanel Component", () => {
     expect(html).toContain("Mức độ hài lòng (Satisfaction)");
     expect(html).toContain("Phòng ban (Department)");
   });
+
+  it("renders Data & Axes and Options accordions for non-academic charts, excluding academic accordions", () => {
+    const nonAcademicCharts = ["pie", "donut", "histogram", "box", "heatmap", "area", "density", "radar"];
+
+    for (const chartType of nonAcademicCharts) {
+      const html = renderToStaticMarkup(
+        <ChartInspectorPanel
+          chartType={chartType}
+          dataset={mockDataset}
+          config={DEFAULT_CHART_CONFIG}
+          onChange={() => {}}
+        />
+      );
+
+      expect(html, `chartType ${chartType} should have accordionData`).toContain(
+        toHtmlEntities(t("presentationView.accordionData"))
+      );
+      expect(html, `chartType ${chartType} should have accordionOptions`).toContain(
+        toHtmlEntities(t("presentationView.accordionOptions"))
+      );
+      expect(html, `chartType ${chartType} should not have accordionStyle`).not.toContain(
+        toHtmlEntities(t("presentationView.accordionStyle"))
+      );
+      expect(html, `chartType ${chartType} should not have accordionErrorBars`).not.toContain(
+        toHtmlEntities(t("presentationView.accordionErrorBars"))
+      );
+      expect(html, `chartType ${chartType} should not have accordionLabels`).not.toContain(
+        toHtmlEntities(t("presentationView.accordionLabels"))
+      );
+    }
+  });
 });

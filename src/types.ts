@@ -133,3 +133,33 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
   exportBackground: "white",
   exportScale: 3,
 };
+
+export interface ChartControls {
+  xCol: string;
+  yCol: string;
+  histogramCol: string;
+  showHistogramDensity: boolean;
+  heatmapCorrMethod: "pearson" | "spearman" | "kendall";
+  radarGroupCol: string;
+  radarNumericCols: string[];
+  densityGroupCol: string;
+  densityValueCol: string;
+  pieBinNumeric: boolean;
+  pieBinCount: number;
+  pieNumericCol: string;
+}
+
+export const DEFAULT_CHART_CONTROLS: ChartControls = {
+  xCol: "",
+  yCol: "",
+  histogramCol: "",
+  showHistogramDensity: false,
+  heatmapCorrMethod: "pearson",
+  radarGroupCol: "",
+  radarNumericCols: [],
+  densityGroupCol: "",
+  densityValueCol: "",
+  pieBinNumeric: false,
+  pieBinCount: 4,
+  pieNumericCol: "",
+};

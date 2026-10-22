@@ -165,6 +165,7 @@ describe("i18n Core Engine", () => {
     const vizKeys = [
       "presentationView.inspectorTitle",
       "presentationView.accordionData",
+      "presentationView.accordionOptions",
       "presentationView.accordionStyle",
       "presentationView.accordionErrorBars",
       "presentationView.accordionLabels",

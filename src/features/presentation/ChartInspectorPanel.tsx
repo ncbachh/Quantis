@@ -1,8 +1,15 @@
 import React from "react";
 import { t } from "@/i18n";
-import type { Dataset, ChartConfig, BarMode, ErrorBarType, ColorPaletteName } from "@/types";
+import type { Dataset, ChartConfig, ChartControls, BarMode, ErrorBarType, ColorPaletteName } from "@/types";
+import { DEFAULT_CHART_CONTROLS } from "@/types";
 import type { AggregateFunction } from "@/utils/aggregation";
 import { PALETTES } from "./colorPalettes";
+import {
+  usesConfigAxes,
+  supportsLegend,
+  supportsBarMode,
+  supportsErrorBars,
+} from "./chartCapabilities";
 import { ChevronDown, SlidersHorizontal, BarChart3, ShieldAlert, Type } from "lucide-react";
 
 export interface ChartInspectorPanelProps {
@@ -10,6 +17,9 @@ export interface ChartInspectorPanelProps {
   dataset: Dataset | null;
   config: ChartConfig;
   onChange: (patch: Partial<ChartConfig>) => void;
+  controls?: ChartControls;
+  onControlsChange?: (patch: Partial<ChartControls>) => void;
+  onExportCsv?: () => void;
   onExportPng?: () => void;
   onCopy?: () => void;
   disabled?: boolean;
@@ -21,6 +31,9 @@ export function ChartInspectorPanel({
   dataset,
   config,
   onChange,
+  controls = DEFAULT_CHART_CONTROLS,
+  onControlsChange = () => {},
+  onExportCsv,
   disabled = false,
   className = "",
 }: ChartInspectorPanelProps) {
@@ -64,10 +77,11 @@ export function ChartInspectorPanel({
     return true;
   });
 
-  const supportsLegend = ["bar", "barH", "line", "scatter"].includes(chartType);
-  const supportsBarMode = ["bar", "barH"].includes(chartType);
-  const supportsErrorBars = ["bar", "barH", "line"].includes(chartType);
+  const hasLegend = supportsLegend(chartType);
+  const hasBarMode = supportsBarMode(chartType);
+  const hasErrorBars = supportsErrorBars(chartType);
   const isMeanAggregation = config.aggregation === "mean";
+  const isAcademic = usesConfigAxes(chartType);
 
   const aggregationOptions: { value: AggregateFunction; labelKey: string }[] = [
     { value: "mean", labelKey: "presentationView.aggLabel.mean" },
@@ -91,7 +105,9 @@ export function ChartInspectorPanel({
       </div>
 
       <div className="p-3 space-y-3">
-        {/* Accordion 1: Data & Axes */}
+        {isAcademic ? (
+          <>
+            {/* Accordion 1: Data & Axes */}
         <details
           open
           className="group border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden"
@@ -171,7 +187,7 @@ export function ChartInspectorPanel({
             )}
 
             {/* Legend (Grouping Field) - only for bar, line, scatter */}
-            {supportsLegend && (
+            {hasLegend && (
               <div>
                 <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
                   {t("presentationView.legendLabel")}
@@ -209,7 +225,7 @@ export function ChartInspectorPanel({
           </summary>
           <div className="p-3 space-y-2.5 bg-white dark:bg-neutral-900">
             {/* Bar Mode (clustered vs stacked) */}
-            {supportsBarMode && (
+            {hasBarMode && (
               <div>
                 <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
                   {t("presentationView.barModeLabel")}
@@ -271,7 +287,7 @@ export function ChartInspectorPanel({
         </details>
 
         {/* Accordion 3: Error Bars - only for bar, barH, line */}
-        {supportsErrorBars && (
+        {hasErrorBars && (
           <details
             open
             className="group border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden"
@@ -398,6 +414,44 @@ export function ChartInspectorPanel({
             </div>
           </div>
         </details>
+          </>
+        ) : (
+          <>
+            {/* Accordion 1: Data & Axes */}
+            <details
+              open
+              className="group border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden"
+            >
+              <summary className="px-3 py-2 bg-neutral-50 dark:bg-neutral-800/60 font-medium text-neutral-700 dark:text-neutral-300 cursor-pointer flex items-center justify-between select-none">
+                <span className="flex items-center gap-1.5">
+                  <BarChart3 className="w-3.5 h-3.5 text-neutral-500" />
+                  {t("presentationView.accordionData")}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-neutral-400 group-open:rotate-180 transition-transform" />
+              </summary>
+              <div className="p-3 space-y-2.5 bg-white dark:bg-neutral-900">
+                {/* Non-academic Data & Axes controls populated in Tasks 4-10 */}
+              </div>
+            </details>
+
+            {/* Accordion 2: Options */}
+            <details
+              open
+              className="group border border-neutral-200 dark:border-neutral-800 rounded-lg overflow-hidden"
+            >
+              <summary className="px-3 py-2 bg-neutral-50 dark:bg-neutral-800/60 font-medium text-neutral-700 dark:text-neutral-300 cursor-pointer flex items-center justify-between select-none">
+                <span className="flex items-center gap-1.5">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-500" />
+                  {t("presentationView.accordionOptions")}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-neutral-400 group-open:rotate-180 transition-transform" />
+              </summary>
+              <div className="p-3 space-y-2.5 bg-white dark:bg-neutral-900">
+                {/* Non-academic Options controls populated in Tasks 4-10 */}
+              </div>
+            </details>
+          </>
+        )}
       </div>
     </aside>
   );
