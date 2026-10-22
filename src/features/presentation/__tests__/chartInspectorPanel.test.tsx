@@ -340,4 +340,19 @@ describe("ChartInspectorPanel Component", () => {
     expect(htmlDensity).toContain('data-testid="density-group-col-select"');
     expect(htmlDensity).toContain('data-testid="density-value-col-select"');
   });
+
+  it("renders radar group selector and numeric axes multi-select in panel", () => {
+    const htmlRadar = renderToStaticMarkup(
+      <ChartInspectorPanel
+        chartType="radar"
+        dataset={mockDataset}
+        config={DEFAULT_CHART_CONFIG}
+        controls={{ ...DEFAULT_CHART_CONTROLS, radarNumericCols: ["Satisfaction"] }}
+        onChange={() => {}}
+      />
+    );
+    expect(htmlRadar).toContain('data-testid="radar-group-col-select"');
+    expect(htmlRadar).toContain('data-testid="radar-axis-checkbox-Satisfaction"');
+    expect(htmlRadar).toContain(t("presentationView.numericAxesLabel"));
+  });
 });

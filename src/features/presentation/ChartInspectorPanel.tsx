@@ -612,6 +612,30 @@ export function ChartInspectorPanel({
                     </div>
                   </>
                 )}
+
+                {chartType === "radar" && (
+                  <div>
+                    <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
+                      {t("presentationView.groupColumnOptionalLabel")}
+                    </label>
+                    <select
+                      data-testid="radar-group-col-select"
+                      disabled={disabled || columnNames.length === 0}
+                      value={controls.radarGroupCol}
+                      onChange={(e) =>
+                        onControlsChange({ radarGroupCol: e.target.value })
+                      }
+                      className="w-full px-2 py-1.5 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    >
+                      <option value="">{t("presentationView.noGroupOption")}</option>
+                      {columnNames.map((col) => (
+                        <option key={col} value={col}>
+                          {getColDisplayName(col)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
             </details>
 
@@ -761,6 +785,47 @@ export function ChartInspectorPanel({
                         {t("presentationView.exportCsvButton")}
                       </button>
                     )}
+                  </div>
+                )}
+
+                {chartType === "radar" && (
+                  <div>
+                    <label className="block mb-1.5 font-medium text-neutral-600 dark:text-neutral-400">
+                      {t("presentationView.numericAxesLabel")}
+                    </label>
+                    <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                      {numericColumns.slice(0, 16).map((col) => {
+                        const checked = controls.radarNumericCols.includes(col);
+                        const canAdd = checked || controls.radarNumericCols.length < 8;
+                        return (
+                          <label
+                            key={col}
+                            className={`flex items-center gap-2 text-xs select-none cursor-pointer ${
+                              !canAdd || disabled ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              data-testid={`radar-axis-checkbox-${col}`}
+                              disabled={disabled || !canAdd}
+                              checked={checked}
+                              onChange={() => {
+                                const next = checked
+                                  ? controls.radarNumericCols.filter((x) => x !== col)
+                                  : controls.radarNumericCols.length < 8
+                                  ? [...controls.radarNumericCols, col]
+                                  : controls.radarNumericCols;
+                                onControlsChange({ radarNumericCols: next });
+                              }}
+                              className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                            />
+                            <span className="text-neutral-700 dark:text-neutral-300 truncate" title={getColDisplayName(col)}>
+                              {getColDisplayName(col)}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>

@@ -755,32 +755,6 @@ export function PresentationView({
             </div>
           </div>
         )}
-        {chartType === "radar" && (
-          <div className="flex flex-wrap gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">{t("presentationView.groupColumnOptionalLabel")}</label>
-              <select value={radarGroupCol} onChange={(e) => setRadarGroupCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-                <option value="">{t("presentationView.noGroupOption")}</option>
-                {cols.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="w-full">
-              <label className="block text-sm font-medium mb-1">{t("presentationView.numericAxesLabel")}</label>
-              <div className="flex flex-wrap gap-2">
-                {numericCols.slice(0, 16).map((c) => {
-                  const checked = radarNumericCols.includes(c);
-                  const canAdd = checked || radarNumericCols.length < 8;
-                  return (
-                    <label key={c} className={`flex items-center gap-1.5 text-sm ${!canAdd ? "opacity-50" : ""}`}>
-                      <input type="checkbox" checked={checked} disabled={!canAdd} onChange={() => setRadarNumericCols((prev) => checked ? prev.filter((x) => x !== c) : prev.length < 8 ? [...prev, c] : prev)} className="rounded border-neutral-400" />
-                      {c.length > 18 ? c.slice(0, 16) + "…" : c}
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
           </div>
           <AIAssistPanel
             context={visualizationContext}

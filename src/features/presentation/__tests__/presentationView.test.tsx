@@ -944,5 +944,19 @@ describe("PresentationView Component — Aggregation Integration", () => {
       expect(toolbarPart).not.toContain(t("presentationView.densityGroupLabel"));
       expect(toolbarPart).not.toContain(t("presentationView.densityValueLabel"));
     });
+
+    it("does not render inline toolbar blocks for radar", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="radar"
+          setChartType={() => {}}
+        />
+      );
+      const [toolbarPart] = html.split('data-testid="chart-inspector-panel"');
+      expect(toolbarPart).not.toContain(t("presentationView.groupColumnOptionalLabel"));
+      expect(toolbarPart).not.toContain(t("presentationView.numericAxesLabel"));
+    });
   });
 });
