@@ -564,6 +564,54 @@ export function ChartInspectorPanel({
                     </div>
                   </>
                 )}
+
+                {chartType === "density" && (
+                  <>
+                    <div>
+                      <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
+                        {t("presentationView.densityGroupLabel")}
+                      </label>
+                      <select
+                        data-testid="density-group-col-select"
+                        disabled={disabled || columnNames.length === 0}
+                        value={controls.densityGroupCol}
+                        onChange={(e) =>
+                          onControlsChange({ densityGroupCol: e.target.value })
+                        }
+                        className="w-full px-2 py-1.5 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      >
+                        <option value="">{t("analysisView.selectPlaceholder")}</option>
+                        {columnNames.map((col) => (
+                          <option key={col} value={col}>
+                            {getColDisplayName(col)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 font-medium text-neutral-600 dark:text-neutral-400">
+                        {t("presentationView.densityValueLabel")}
+                      </label>
+                      <select
+                        data-testid="density-value-col-select"
+                        disabled={disabled || numericColumns.length === 0}
+                        value={controls.densityValueCol}
+                        onChange={(e) =>
+                          onControlsChange({ densityValueCol: e.target.value })
+                        }
+                        className="w-full px-2 py-1.5 rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      >
+                        <option value="">{t("analysisView.selectPlaceholder")}</option>
+                        {numericColumns.map((col) => (
+                          <option key={col} value={col}>
+                            {getColDisplayName(col)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
               </div>
             </details>
 

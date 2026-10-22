@@ -326,4 +326,18 @@ describe("ChartInspectorPanel Component", () => {
     expect(htmlHeatmap).toContain('data-testid="heatmap-method-kendall"');
     expect(htmlHeatmap).toContain('data-testid="heatmap-export-csv-btn"');
   });
+
+  it("renders density group and value selectors in panel", () => {
+    const htmlDensity = renderToStaticMarkup(
+      <ChartInspectorPanel
+        chartType="density"
+        dataset={mockDataset}
+        config={DEFAULT_CHART_CONFIG}
+        controls={DEFAULT_CHART_CONTROLS}
+        onChange={() => {}}
+      />
+    );
+    expect(htmlDensity).toContain('data-testid="density-group-col-select"');
+    expect(htmlDensity).toContain('data-testid="density-value-col-select"');
+  });
 });

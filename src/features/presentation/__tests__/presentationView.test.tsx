@@ -930,5 +930,19 @@ describe("PresentationView Component — Aggregation Integration", () => {
       expect(toolbarPart).not.toContain(t("presentationView.coefficientLabel"));
       expect(toolbarPart).not.toContain(t("presentationView.exportCsvButton"));
     });
+
+    it("does not render inline toolbar blocks for density", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="density"
+          setChartType={() => {}}
+        />
+      );
+      const [toolbarPart] = html.split('data-testid="chart-inspector-panel"');
+      expect(toolbarPart).not.toContain(t("presentationView.densityGroupLabel"));
+      expect(toolbarPart).not.toContain(t("presentationView.densityValueLabel"));
+    });
   });
 });

@@ -781,25 +781,6 @@ export function PresentationView({
             </div>
           </div>
         )}
-
-        {chartType === "density" && (
-          <div className="flex flex-wrap gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">{t("presentationView.densityGroupLabel")}</label>
-              <select value={densityGroupCol} onChange={(e) => setDensityGroupCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-                <option value="">{t("analysisView.selectPlaceholder")}</option>
-                {cols.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">{t("presentationView.densityValueLabel")}</label>
-              <select value={densityValueCol} onChange={(e) => setDensityValueCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-                <option value="">{t("analysisView.selectPlaceholder")}</option>
-                {numericCols.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-          </div>
-        )}
           </div>
           <AIAssistPanel
             context={visualizationContext}
