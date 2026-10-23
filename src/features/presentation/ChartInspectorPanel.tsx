@@ -18,6 +18,10 @@ export const supportsLegend = (chartType: string): boolean =>
 export const supportsDataLabels = (chartType: string): boolean =>
   ["bar", "barH", "line", "pie", "donut", "histogram", "area", "radar"].includes(chartType);
 
+/** Charts that have custom options in the inspector. */
+export const supportsOptions = (chartType: string): boolean =>
+  ["pie", "donut", "histogram", "heatmap", "radar"].includes(chartType);
+
 /** All 12 reachable charts support auto title generation. */
 export const supportsAutoTitle = (chartType: string): boolean =>
   [
@@ -580,193 +584,195 @@ export function ChartInspectorPanel({
             </details>
 
             {/* Accordion 2: Options */}
-            <details open className="group">
-              <summary className="w-full px-4 py-3 flex items-center justify-between font-semibold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-50/80 dark:hover:bg-neutral-800/40 cursor-pointer select-none transition-colors list-none [&::-webkit-details-marker]:hidden focus:outline-none focus-visible:bg-neutral-50 dark:focus-visible:bg-neutral-800/50">
-                <span className="flex items-center gap-2">
-                  <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors" />
-                  <span>{t("presentationView.accordionOptions")}</span>
-                </span>
-                <ChevronDown className="w-3.5 h-3.5 text-neutral-400 group-open:rotate-180 transition-transform duration-200 ease-out" />
-              </summary>
-              <div className="px-4 pb-4 pt-0.5 space-y-3 bg-white dark:bg-neutral-900">
-                {/* Non-academic Options controls */}
-                {(chartType === "pie" || chartType === "donut") && (
-                  <div className="space-y-3">
-                    {chartType === "pie" && (
-                      <p className="text-neutral-500 dark:text-neutral-400 text-xs leading-relaxed">
-                        {t("presentationView.pieHint")}
-                      </p>
-                    )}
+            {supportsOptions(chartType) && (
+              <details open className="group">
+                <summary className="w-full px-4 py-3 flex items-center justify-between font-semibold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-50/80 dark:hover:bg-neutral-800/40 cursor-pointer select-none transition-colors list-none [&::-webkit-details-marker]:hidden focus:outline-none focus-visible:bg-neutral-50 dark:focus-visible:bg-neutral-800/50">
+                  <span className="flex items-center gap-2">
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors" />
+                    <span>{t("presentationView.accordionOptions")}</span>
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 text-neutral-400 group-open:rotate-180 transition-transform duration-200 ease-out" />
+                </summary>
+                <div className="px-4 pb-4 pt-0.5 space-y-3 bg-white dark:bg-neutral-900">
+                  {/* Non-academic Options controls */}
+                  {(chartType === "pie" || chartType === "donut") && (
+                    <div className="space-y-3">
+                      {chartType === "pie" && (
+                        <p className="text-neutral-500 dark:text-neutral-400 text-xs leading-relaxed">
+                          {t("presentationView.pieHint")}
+                        </p>
+                      )}
+                      <label className="flex items-center gap-2.5 cursor-pointer select-none group/check py-0.5">
+                        <input
+                          type="checkbox"
+                          data-testid="pie-bin-numeric-checkbox"
+                          disabled={disabled}
+                          checked={controls.pieBinNumeric}
+                          onChange={(e) =>
+                            onControlsChange({ pieBinNumeric: e.target.checked })
+                          }
+                          className="w-3.5 h-3.5 rounded border-neutral-300 dark:border-neutral-600 text-primary-600 focus:ring-primary-500/20 dark:bg-neutral-800 cursor-pointer"
+                        />
+                        <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 group-hover/check:text-neutral-900 dark:group-hover/check:text-neutral-100 transition-colors">
+                          {t("presentationView.binNumericLabel")}
+                        </span>
+                      </label>
+
+                      {controls.pieBinNumeric && (
+                        <div className="space-y-3 pl-6 pt-1 border-l-2 border-neutral-100 dark:border-neutral-800 ml-1">
+                          <div>
+                            <label className={labelClass}>
+                              {t("presentationView.numericColumnLabel")}
+                            </label>
+                            <select
+                              data-testid="pie-numeric-col-select"
+                              disabled={disabled || numericColumns.length === 0}
+                              value={controls.pieNumericCol}
+                              onChange={(e) =>
+                                onControlsChange({ pieNumericCol: e.target.value })
+                              }
+                              className={inputControlClass}
+                            >
+                              <option value="">{t("presentationView.noneOption")}</option>
+                              {numericColumns.map((col) => (
+                                <option key={col} value={col}>
+                                  {getColDisplayName(col)}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className={labelClass}>
+                              {t("presentationView.binCountLabel")}
+                            </label>
+                            <select
+                              data-testid="pie-bin-count-select"
+                              disabled={disabled}
+                              value={controls.pieBinCount}
+                              onChange={(e) =>
+                                onControlsChange({ pieBinCount: Number(e.target.value) })
+                              }
+                              className={inputControlClass}
+                            >
+                              {[2, 3, 4, 5, 6].map((n) => (
+                                <option key={n} value={n}>
+                                  {n} {t("presentationView.binCountUnit")}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {chartType === "histogram" && (
                     <label className="flex items-center gap-2.5 cursor-pointer select-none group/check py-0.5">
                       <input
                         type="checkbox"
-                        data-testid="pie-bin-numeric-checkbox"
+                        data-testid="histogram-kde-checkbox"
                         disabled={disabled}
-                        checked={controls.pieBinNumeric}
+                        checked={controls.showHistogramDensity}
                         onChange={(e) =>
-                          onControlsChange({ pieBinNumeric: e.target.checked })
+                          onControlsChange({
+                            showHistogramDensity: e.target.checked,
+                          })
                         }
                         className="w-3.5 h-3.5 rounded border-neutral-300 dark:border-neutral-600 text-primary-600 focus:ring-primary-500/20 dark:bg-neutral-800 cursor-pointer"
                       />
                       <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 group-hover/check:text-neutral-900 dark:group-hover/check:text-neutral-100 transition-colors">
-                        {t("presentationView.binNumericLabel")}
+                        {t("presentationView.showKdeLabel")}
                       </span>
                     </label>
+                  )}
 
-                    {controls.pieBinNumeric && (
-                      <div className="space-y-3 pl-6 pt-1 border-l-2 border-neutral-100 dark:border-neutral-800 ml-1">
-                        <div>
-                          <label className={labelClass}>
-                            {t("presentationView.numericColumnLabel")}
-                          </label>
-                          <select
-                            data-testid="pie-numeric-col-select"
-                            disabled={disabled || numericColumns.length === 0}
-                            value={controls.pieNumericCol}
-                            onChange={(e) =>
-                              onControlsChange({ pieNumericCol: e.target.value })
-                            }
-                            className={inputControlClass}
-                          >
-                            <option value="">{t("presentationView.noneOption")}</option>
-                            {numericColumns.map((col) => (
-                              <option key={col} value={col}>
-                                {getColDisplayName(col)}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className={labelClass}>
-                            {t("presentationView.binCountLabel")}
-                          </label>
-                          <select
-                            data-testid="pie-bin-count-select"
-                            disabled={disabled}
-                            value={controls.pieBinCount}
-                            onChange={(e) =>
-                              onControlsChange({ pieBinCount: Number(e.target.value) })
-                            }
-                            className={inputControlClass}
-                          >
-                            {[2, 3, 4, 5, 6].map((n) => (
-                              <option key={n} value={n}>
-                                {n} {t("presentationView.binCountUnit")}
-                              </option>
-                            ))}
-                          </select>
+                  {chartType === "heatmap" && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className={labelClass}>
+                          {t("presentationView.coefficientLabel")}
+                        </label>
+                        <div className="grid grid-cols-3 gap-1 rounded-md bg-neutral-100 dark:bg-neutral-800/80 p-0.5 border border-neutral-200/70 dark:border-neutral-700/60">
+                          {(["pearson", "spearman", "kendall"] as const).map((method) => (
+                            <button
+                              key={method}
+                              type="button"
+                              data-testid={`heatmap-method-${method}`}
+                              disabled={disabled}
+                              onClick={() =>
+                                onControlsChange({ heatmapCorrMethod: method })
+                              }
+                              className={`py-1 text-center rounded text-xs capitalize transition-all ${
+                                controls.heatmapCorrMethod === method
+                                  ? "bg-white dark:bg-neutral-700 font-semibold text-neutral-900 dark:text-white shadow-2xs"
+                                  : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+                              }`}
+                            >
+                              {method}
+                            </button>
+                          ))}
                         </div>
                       </div>
-                    )}
-                  </div>
-                )}
 
-                {chartType === "histogram" && (
-                  <label className="flex items-center gap-2.5 cursor-pointer select-none group/check py-0.5">
-                    <input
-                      type="checkbox"
-                      data-testid="histogram-kde-checkbox"
-                      disabled={disabled}
-                      checked={controls.showHistogramDensity}
-                      onChange={(e) =>
-                        onControlsChange({
-                          showHistogramDensity: e.target.checked,
-                        })
-                      }
-                      className="w-3.5 h-3.5 rounded border-neutral-300 dark:border-neutral-600 text-primary-600 focus:ring-primary-500/20 dark:bg-neutral-800 cursor-pointer"
-                    />
-                    <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 group-hover/check:text-neutral-900 dark:group-hover/check:text-neutral-100 transition-colors">
-                      {t("presentationView.showKdeLabel")}
-                    </span>
-                  </label>
-                )}
+                      {onExportCsv && (
+                        <button
+                          type="button"
+                          data-testid="heatmap-export-csv-btn"
+                          disabled={disabled}
+                          onClick={onExportCsv}
+                          className="w-full rounded-md border border-neutral-200 dark:border-neutral-700 bg-neutral-50/70 hover:bg-white dark:bg-neutral-800/60 dark:hover:bg-neutral-800 px-3 py-1.5 text-xs font-medium flex items-center justify-center gap-1.5 text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-all shadow-2xs cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          {t("presentationView.exportCsvButton")}
+                        </button>
+                      )}
+                    </div>
+                  )}
 
-                {chartType === "heatmap" && (
-                  <div className="space-y-3">
+                  {chartType === "radar" && (
                     <div>
                       <label className={labelClass}>
-                        {t("presentationView.coefficientLabel")}
+                        {t("presentationView.numericAxesLabel")}
                       </label>
-                      <div className="grid grid-cols-3 gap-1 rounded-md bg-neutral-100 dark:bg-neutral-800/80 p-0.5 border border-neutral-200/70 dark:border-neutral-700/60">
-                        {(["pearson", "spearman", "kendall"] as const).map((method) => (
-                          <button
-                            key={method}
-                            type="button"
-                            data-testid={`heatmap-method-${method}`}
-                            disabled={disabled}
-                            onClick={() =>
-                              onControlsChange({ heatmapCorrMethod: method })
-                            }
-                            className={`py-1 text-center rounded text-xs capitalize transition-all ${
-                              controls.heatmapCorrMethod === method
-                                ? "bg-white dark:bg-neutral-700 font-semibold text-neutral-900 dark:text-white shadow-2xs"
-                                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
-                            }`}
-                          >
-                            {method}
-                          </button>
-                        ))}
+                      <div className="border border-neutral-200 dark:border-neutral-700/80 rounded-md max-h-48 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800/80 bg-neutral-50/30 dark:bg-neutral-900/40">
+                        {numericColumns.slice(0, 16).map((col) => {
+                          const checked = controls.radarNumericCols.includes(col);
+                          const canAdd = checked || controls.radarNumericCols.length < 8;
+                          return (
+                            <label
+                              key={col}
+                              className={`flex items-center gap-2.5 px-2.5 py-1.5 text-xs select-none cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors ${
+                                !canAdd || disabled ? "opacity-50 cursor-not-allowed" : ""
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                data-testid={`radar-axis-checkbox-${col}`}
+                                disabled={disabled || !canAdd}
+                                checked={checked}
+                                onChange={() => {
+                                  const next = checked
+                                    ? controls.radarNumericCols.filter((x) => x !== col)
+                                    : controls.radarNumericCols.length < 8
+                                    ? [...controls.radarNumericCols, col]
+                                    : controls.radarNumericCols;
+                                  onControlsChange({ radarNumericCols: next });
+                                }}
+                                className="w-3.5 h-3.5 rounded border-neutral-300 dark:border-neutral-600 text-primary-600 focus:ring-primary-500/20 dark:bg-neutral-800 cursor-pointer"
+                              />
+                              <span className="text-neutral-700 dark:text-neutral-300 truncate" title={getColDisplayName(col)}>
+                                {getColDisplayName(col)}
+                              </span>
+                            </label>
+                          );
+                        })}
                       </div>
                     </div>
-
-                    {onExportCsv && (
-                      <button
-                        type="button"
-                        data-testid="heatmap-export-csv-btn"
-                        disabled={disabled}
-                        onClick={onExportCsv}
-                        className="w-full rounded-md border border-neutral-200 dark:border-neutral-700 bg-neutral-50/70 hover:bg-white dark:bg-neutral-800/60 dark:hover:bg-neutral-800 px-3 py-1.5 text-xs font-medium flex items-center justify-center gap-1.5 text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-all shadow-2xs cursor-pointer"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        {t("presentationView.exportCsvButton")}
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {chartType === "radar" && (
-                  <div>
-                    <label className={labelClass}>
-                      {t("presentationView.numericAxesLabel")}
-                    </label>
-                    <div className="border border-neutral-200 dark:border-neutral-700/80 rounded-md max-h-48 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800/80 bg-neutral-50/30 dark:bg-neutral-900/40">
-                      {numericColumns.slice(0, 16).map((col) => {
-                        const checked = controls.radarNumericCols.includes(col);
-                        const canAdd = checked || controls.radarNumericCols.length < 8;
-                        return (
-                          <label
-                            key={col}
-                            className={`flex items-center gap-2.5 px-2.5 py-1.5 text-xs select-none cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors ${
-                              !canAdd || disabled ? "opacity-50 cursor-not-allowed" : ""
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              data-testid={`radar-axis-checkbox-${col}`}
-                              disabled={disabled || !canAdd}
-                              checked={checked}
-                              onChange={() => {
-                                const next = checked
-                                  ? controls.radarNumericCols.filter((x) => x !== col)
-                                  : controls.radarNumericCols.length < 8
-                                  ? [...controls.radarNumericCols, col]
-                                  : controls.radarNumericCols;
-                                onControlsChange({ radarNumericCols: next });
-                              }}
-                              className="w-3.5 h-3.5 rounded border-neutral-300 dark:border-neutral-600 text-primary-600 focus:ring-primary-500/20 dark:bg-neutral-800 cursor-pointer"
-                            />
-                            <span className="text-neutral-700 dark:text-neutral-300 truncate" title={getColDisplayName(col)}>
-                              {getColDisplayName(col)}
-                            </span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </details>
+                  )}
+                </div>
+              </details>
+            )}
           </>
         )}
 

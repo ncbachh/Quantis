@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { ChartInspectorPanel, usesConfigAxes, supportsAutoTitle, supportsDataLabels } from "../ChartInspectorPanel";
+import { ChartInspectorPanel, usesConfigAxes, supportsAutoTitle, supportsDataLabels, supportsOptions } from "../ChartInspectorPanel";
 import { setLocale, t } from "@/i18n";
 import { DEFAULT_CHART_CONFIG, DEFAULT_CHART_CONTROLS, type Dataset, type ChartConfig } from "@/types";
 
@@ -234,9 +234,15 @@ describe("ChartInspectorPanel Component", () => {
       expect(html, `chartType ${chartType} should have accordionData`).toContain(
         toHtmlEntities(t("presentationView.accordionData"))
       );
-      expect(html, `chartType ${chartType} should have accordionOptions`).toContain(
-        toHtmlEntities(t("presentationView.accordionOptions"))
-      );
+      if (["box", "area", "density"].includes(chartType)) {
+        expect(html, `chartType ${chartType} without options should not have accordionOptions`).not.toContain(
+          toHtmlEntities(t("presentationView.accordionOptions"))
+        );
+      } else {
+        expect(html, `chartType ${chartType} with options should have accordionOptions`).toContain(
+          toHtmlEntities(t("presentationView.accordionOptions"))
+        );
+      }
       expect(html, `chartType ${chartType} should not have accordionStyle`).not.toContain(
         toHtmlEntities(t("presentationView.accordionStyle"))
       );
@@ -246,6 +252,18 @@ describe("ChartInspectorPanel Component", () => {
       expect(html, `chartType ${chartType} should have accordionLabels`).toContain(
         toHtmlEntities(t("presentationView.accordionLabels"))
       );
+    }
+  });
+
+  it("verifies supportsOptions predicate correctly identifies charts with options", () => {
+    const chartsWithOptions = ["pie", "donut", "histogram", "heatmap", "radar"];
+    const chartsWithoutOptions = ["box", "area", "density", "bar", "barH", "line", "scatter"];
+
+    for (const ct of chartsWithOptions) {
+      expect(supportsOptions(ct), `${ct} should support options`).toBe(true);
+    }
+    for (const ct of chartsWithoutOptions) {
+      expect(supportsOptions(ct), `${ct} should not support options`).toBe(false);
     }
   });
 
