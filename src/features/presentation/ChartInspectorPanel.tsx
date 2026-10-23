@@ -4,13 +4,19 @@ import type { Dataset, ChartConfig, ChartControls, BarMode, ErrorBarType, ColorP
 import { DEFAULT_CHART_CONTROLS } from "@/types";
 import type { AggregateFunction } from "@/utils/aggregation";
 import { PALETTES } from "./colorPalettes";
-import {
-  usesConfigAxes,
-  supportsLegend,
-  supportsBarMode,
-  supportsErrorBars,
-} from "./chartCapabilities";
 import { ChevronDown, SlidersHorizontal, BarChart3, ShieldAlert, Type, Download } from "lucide-react";
+
+/** Charts whose X/Y/aggregation live in `chartConfig` (vs legacy hooks). */
+export const usesConfigAxes = (chartType: string): boolean =>
+  ["bar", "barH", "line", "scatter"].includes(chartType);
+
+/** Charts that support a Legend grouping field. */
+export const supportsLegend = (chartType: string): boolean =>
+  ["bar", "barH", "line", "scatter"].includes(chartType);
+
+/** Charts that support automatic academic title generation. */
+export const supportsAutoTitle = (chartType: string): boolean =>
+  ["bar", "barH", "line", "scatter"].includes(chartType);
 
 export interface ChartInspectorPanelProps {
   chartType: string;
@@ -78,10 +84,10 @@ export function ChartInspectorPanel({
   });
 
   const hasLegend = supportsLegend(chartType);
-  const hasBarMode = supportsBarMode(chartType);
-  const hasErrorBars = supportsErrorBars(chartType);
+  const hasBarMode = chartType === "bar" || chartType === "barH";
+  const hasErrorBars = chartType === "bar" || chartType === "barH" || chartType === "line";
   const isMeanAggregation = config.aggregation === "mean";
-  const isAcademic = usesConfigAxes(chartType);
+  const hasConfigAxes = usesConfigAxes(chartType);
 
   const aggregationOptions: { value: AggregateFunction; labelKey: string }[] = [
     { value: "mean", labelKey: "presentationView.aggLabel.mean" },
@@ -105,7 +111,7 @@ export function ChartInspectorPanel({
       </div>
 
       <div className="p-3 space-y-3">
-        {isAcademic ? (
+        {hasConfigAxes ? (
           <>
             {/* Accordion 1: Data & Axes */}
         <details

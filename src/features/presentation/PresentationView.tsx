@@ -29,12 +29,12 @@ import {
 } from "recharts";
 import type { Dataset, ChartConfig, ChartControls } from "@/types";
 import { DEFAULT_CHART_CONFIG } from "@/types";
-import { ChartInspectorPanel } from "./ChartInspectorPanel";
 import {
+  ChartInspectorPanel,
   usesConfigAxes,
   supportsLegend,
   supportsAutoTitle,
-} from "./chartCapabilities";
+} from "./ChartInspectorPanel";
 import { pivotByLegend, getSeriesKeys, calculateErrorOffsets } from "@/utils/seriesPivot";
 import { computeAxisScale } from "@/utils/chartScale";
 import { getPaletteColor } from "./colorPalettes";
