@@ -268,7 +268,7 @@ describe("ChartInspectorPanel Component", () => {
   });
 
   it("renders pie and donut controls in panel", () => {
-    // Pie: X + Y selectors in Data & Axes, bin numeric toggle in Options
+    // Pie: Legend + Values in Data & Axes, bin numeric toggle in Options
     const htmlPie = renderToStaticMarkup(
       <ChartInspectorPanel
         chartType="pie"
@@ -278,13 +278,14 @@ describe("ChartInspectorPanel Component", () => {
         onChange={() => {}}
       />
     );
-    expect(htmlPie).toContain('data-testid="pie-x-col-select"');
-    expect(htmlPie).toContain('data-testid="pie-y-col-select"');
+    expect(htmlPie).toContain('data-testid="pie-legend-col-select"');
+    expect(htmlPie).toContain('data-testid="pie-values-col-select"');
+    expect(htmlPie).not.toContain('data-testid="pie-y-col-select"');
     expect(htmlPie).toContain('data-testid="pie-bin-numeric-checkbox"');
     expect(htmlPie).toContain('data-testid="pie-numeric-col-select"');
     expect(htmlPie).toContain('data-testid="pie-bin-count-select"');
 
-    // Donut: categorical selector in Data & Axes, bin numeric in Options
+    // Donut: Legend + Values in Data & Axes, bin numeric in Options
     const htmlDonut = renderToStaticMarkup(
       <ChartInspectorPanel
         chartType="donut"
@@ -294,8 +295,8 @@ describe("ChartInspectorPanel Component", () => {
         onChange={() => {}}
       />
     );
-    expect(htmlDonut).toContain('data-testid="donut-cat-col-select"');
-    expect(htmlDonut).not.toContain('data-testid="pie-y-col-select"');
+    expect(htmlDonut).toContain('data-testid="donut-legend-col-select"');
+    expect(htmlDonut).toContain('data-testid="donut-values-col-select"');
     expect(htmlDonut).toContain('data-testid="pie-bin-numeric-checkbox"');
     expect(htmlDonut).not.toContain('data-testid="pie-numeric-col-select"');
   });
@@ -421,10 +422,11 @@ describe("ChartInspectorPanel Component", () => {
           onChange={() => {}}
         />
       );
-      expect(htmlPie).toContain('data-testid="pie-x-col-select"');
-      expect(htmlPie).toContain('data-testid="pie-y-col-select"');
-      expect(htmlPie).toMatch(/<select[^>]*data-testid="pie-x-col-select"[^>]*>[\s\S]*?<option[^>]*value="Department"[^>]*selected=""/);
-      expect(htmlPie).toMatch(/<select[^>]*data-testid="pie-y-col-select"[^>]*>[\s\S]*?<option[^>]*value="Satisfaction"[^>]*selected=""/);
+      expect(htmlPie).toContain('data-testid="pie-legend-col-select"');
+      expect(htmlPie).toContain('data-testid="pie-values-col-select"');
+      expect(htmlPie).toContain('data-testid="pie-aggregation-select"');
+      expect(htmlPie).toMatch(/<select[^>]*data-testid="pie-legend-col-select"[^>]*>[\s\S]*?<option[^>]*value="Department"[^>]*selected=""/);
+      expect(htmlPie).toMatch(/<select[^>]*data-testid="pie-values-col-select"[^>]*>[\s\S]*?<option[^>]*value="Satisfaction"[^>]*selected=""/);
 
       // Donut chart
       const htmlDonut = renderToStaticMarkup(
@@ -436,8 +438,11 @@ describe("ChartInspectorPanel Component", () => {
           onChange={() => {}}
         />
       );
-      expect(htmlDonut).toContain('data-testid="donut-cat-col-select"');
-      expect(htmlDonut).toMatch(/<select[^>]*data-testid="donut-cat-col-select"[^>]*>[\s\S]*?<option[^>]*value="Department"[^>]*selected=""/);
+      expect(htmlDonut).toContain('data-testid="donut-legend-col-select"');
+      expect(htmlDonut).toContain('data-testid="donut-values-col-select"');
+      expect(htmlDonut).toContain('data-testid="donut-aggregation-select"');
+      expect(htmlDonut).toMatch(/<select[^>]*data-testid="donut-legend-col-select"[^>]*>[\s\S]*?<option[^>]*value="Department"[^>]*selected=""/);
+      expect(htmlDonut).toMatch(/<select[^>]*data-testid="donut-values-col-select"[^>]*>[\s\S]*?<option[^>]*value="Satisfaction"[^>]*selected=""/);
 
       // Area chart
       const htmlArea = renderToStaticMarkup(

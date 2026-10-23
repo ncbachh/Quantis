@@ -374,14 +374,14 @@ export function ChartInspectorPanel({
               </summary>
               <div className="px-4 pb-4 pt-0.5 space-y-3 bg-white dark:bg-neutral-900">
                 {/* Non-academic Data & Axes controls */}
-                {(chartType === "pie" || chartType === "area") && (
+                {chartType === "area" && (
                   <>
                     <div>
                       <label className={labelClass}>
                         {t("presentationView.axisXLabel")}
                       </label>
                       <select
-                        data-testid={chartType === "pie" ? "pie-x-col-select" : "area-x-col-select"}
+                        data-testid="area-x-col-select"
                         disabled={disabled || columnNames.length === 0}
                         value={config.xCol}
                         onChange={(e) => onChange({ xCol: e.target.value })}
@@ -400,7 +400,7 @@ export function ChartInspectorPanel({
                         {t("presentationView.axisYNumericLabel")}
                       </label>
                       <select
-                        data-testid={chartType === "pie" ? "pie-y-col-select" : "area-y-col-select"}
+                        data-testid="area-y-col-select"
                         disabled={disabled || numericColumns.length === 0}
                         value={config.yCol}
                         onChange={(e) => onChange({ yCol: e.target.value })}
@@ -417,29 +417,82 @@ export function ChartInspectorPanel({
                   </>
                 )}
 
-                {chartType === "donut" && (
-                  <div>
-                    <label className={labelClass}>
-                      {t("presentationView.categoricalColumnLabel")}
-                    </label>
-                    <select
-                      data-testid="donut-cat-col-select"
-                      disabled={disabled || columnNames.length === 0}
-                      value={config.xCol}
-                      onChange={(e) => {
-                        onChange({ xCol: e.target.value });
-                        onControlsChange?.({ pieBinNumeric: false });
-                      }}
-                      className={inputControlClass}
-                    >
-                      <option value="">{t("presentationView.noneOption")}</option>
-                      {columnNames.map((col) => (
-                        <option key={col} value={col}>
-                          {getColDisplayName(col)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                {(chartType === "pie" || chartType === "donut") && (
+                  <>
+                    {/* Legend (Category) */}
+                    <div>
+                      <label className={labelClass}>
+                        {t("presentationView.pieLegendLabel")}
+                      </label>
+                      <select
+                        data-testid={chartType === "pie" ? "pie-legend-col-select" : "donut-legend-col-select"}
+                        disabled={disabled || columnNames.length === 0}
+                        value={config.xCol}
+                        onChange={(e) => {
+                          onChange({ xCol: e.target.value });
+                          onControlsChange?.({ pieBinNumeric: false });
+                        }}
+                        className={inputControlClass}
+                      >
+                        <option value="">{t("presentationView.noneOption")}</option>
+                        {columnNames.map((col) => (
+                          <option key={col} value={col}>
+                            {getColDisplayName(col)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Values (Numeric) */}
+                    <div>
+                      <label className={labelClass}>
+                        {t("presentationView.valuesLabel")}
+                      </label>
+                      <select
+                        data-testid={chartType === "pie" ? "pie-values-col-select" : "donut-values-col-select"}
+                        disabled={disabled || numericColumns.length === 0}
+                        value={config.yCol}
+                        onChange={(e) =>
+                          onChange({
+                            yCol: e.target.value,
+                            ...(!config.yCol && e.target.value ? { aggregation: "sum" } : {}),
+                          })
+                        }
+                        className={inputControlClass}
+                      >
+                        <option value="">{t("presentationView.noneOption")}</option>
+                        {numericColumns.map((col) => (
+                          <option key={col} value={col}>
+                            {getColDisplayName(col)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Aggregation (when Values is selected) */}
+                    {config.yCol && (
+                      <div>
+                        <label className={labelClass}>
+                          {t("presentationView.aggregationLabel")}
+                        </label>
+                        <select
+                          data-testid={chartType === "pie" ? "pie-aggregation-select" : "donut-aggregation-select"}
+                          disabled={disabled}
+                          value={config.aggregation || "sum"}
+                          onChange={(e) =>
+                            onChange({ aggregation: e.target.value as AggregateFunction })
+                          }
+                          className={inputControlClass}
+                        >
+                          {aggregationOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {t(opt.labelKey)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {chartType === "histogram" && (

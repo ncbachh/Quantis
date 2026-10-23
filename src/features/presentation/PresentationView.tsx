@@ -126,6 +126,21 @@ export function PresentationView({
   const [pieBinCount, setPieBinCount] = useState(initialControls?.pieBinCount ?? 4);
   const [pieNumericCol, setPieNumericCol] = useState(initialControls?.pieNumericCol ?? "");
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const prevChartTypeRef = useRef(chartType);
+
+  useEffect(() => {
+    const prev = prevChartTypeRef.current;
+    prevChartTypeRef.current = chartType;
+    if (prev !== chartType) {
+      const isPieOrDonut = chartType === "pie" || chartType === "donut";
+      const wasPieOrDonut = prev === "pie" || prev === "donut";
+      if (isPieOrDonut && !wasPieOrDonut) {
+        setChartConfig((c) => ({ ...c, showDataLabels: true }));
+      } else if (!isPieOrDonut && wasPieOrDonut) {
+        setChartConfig((c) => ({ ...c, showDataLabels: false }));
+      }
+    }
+  }, [chartType]);
   const [boxStatsBackendResult, setBoxStatsBackendResult] = useState<Array<{ group: string; min: number; q1: number; median: number; q3: number; max: number; n: number }> | null>(null);
   const [histBinsBackendResult, setHistBinsBackendResult] = useState<Array<{ binStart: number; binEnd: number; count: number }> | null>(null);
   const PIE_COLORS = ["#0061bb", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4"];
@@ -252,17 +267,26 @@ export function PresentationView({
               return binned.map((b) => ({ name: b.label, value: b.count })).filter((d) => d.value > 0);
             })()
           : (xCol && xIdx >= 0
-              ? (() => {
-                  const counts: Record<string, number> = {};
-                  rows.slice(1).forEach((r) => {
-                    const v = String(r[xIdx] ?? "").trim();
-                    if (v !== "") counts[v] = (counts[v] || 0) + 1;
-                  });
-                  return Object.entries(counts)
-                    .map(([name, count]) => ({ name, value: count }))
-                    .filter((d) => d.value > 0)
-                    .slice(0, 24);
-                })()
+              ? (yCol && yIdx >= 0 && numericCols.includes(yCol)
+                  ? aggregateData(rows, {
+                      groupByCols: [xCol],
+                      measureCol: yCol,
+                      func: chartConfig.aggregation || "sum",
+                      limit: 30,
+                    })
+                      .map((g) => ({ name: g.name, value: g.value, metrics: g.metrics }))
+                      .filter((d) => Number.isFinite(d.value) && d.value > 0)
+                  : (() => {
+                      const counts: Record<string, number> = {};
+                      rows.slice(1).forEach((r) => {
+                        const v = String(r[xIdx] ?? "").trim();
+                        if (v !== "") counts[v] = (counts[v] || 0) + 1;
+                      });
+                      return Object.entries(counts)
+                        .map(([name, count]) => ({ name, value: count }))
+                        .filter((d) => d.value > 0)
+                        .slice(0, 24);
+                    })())
               : []))
       : (barData.length > 0 ? barData.map((d) => ({ name: d.name, value: d.count })) : []);
     const lineData = rows.length >= 2 && xIdx >= 0 && yIdx >= 0
@@ -498,6 +522,11 @@ export function PresentationView({
           const col = pieNumericCol || xCol;
           const colLabel = col ? (variables[col]?.label?.trim() || col) : "";
           return colLabel ? t("presentationView.autoTitlePieBinned", { col: colLabel }) : "";
+        }
+        if (xLabel && yLabel && numericCols.includes(yCol)) {
+          const aggFunc = chartConfig.aggregation || "sum";
+          const aggPrefix = t("presentationView.aggLabel." + aggFunc);
+          return `${aggPrefix} ${t("presentationView.ofPreposition")} ${yLabel} ${t("presentationView.autoTitleBy")} ${xLabel}`;
         }
         return xLabel ? t("presentationView.autoTitlePieCategorical", { x: xLabel }) : "";
       }
@@ -1072,7 +1101,14 @@ export function PresentationView({
                         <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(v: number) => [v, t("presentationView.barCountLabel")]} />
+                    <Tooltip
+                      formatter={(v: number) => [
+                        v,
+                        yCol && numericCols.includes(yCol)
+                          ? `${t("presentationView.aggLabel." + (chartConfig.aggregation || "sum"))} ${t("presentationView.ofPreposition")} ${yLabel}`
+                          : t("presentationView.barCountLabel"),
+                      ]}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -1092,7 +1128,14 @@ export function PresentationView({
                         <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(v: number) => [v, t("presentationView.barCountLabel")]} />
+                    <Tooltip
+                      formatter={(v: number) => [
+                        v,
+                        yCol && numericCols.includes(yCol)
+                          ? `${t("presentationView.aggLabel." + (chartConfig.aggregation || "sum"))} ${t("presentationView.ofPreposition")} ${yLabel}`
+                          : t("presentationView.barCountLabel"),
+                      ]}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

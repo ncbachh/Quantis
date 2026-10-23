@@ -1433,5 +1433,31 @@ describe("PresentationView Component — Aggregation Integration", () => {
       );
       expect(htmlHeatmap).not.toContain('data-testid="label-list"');
     });
+
+    it("aggregates values when Values (yCol) is provided for pie and donut charts", () => {
+      const htmlPieAgg = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={dataLabelDataset}
+          chartType="pie"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Category", yCol: "MetricA", aggregation: "sum" }}
+        />
+      );
+      expect(htmlPieAgg).toContain('data-testid="pie-chart"');
+      expect(htmlPieAgg).toContain('data-testid="pie-series"');
+
+      const htmlDonutAgg = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={dataLabelDataset}
+          chartType="donut"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Category", yCol: "MetricA", aggregation: "sum" }}
+        />
+      );
+      expect(htmlDonutAgg).toContain('data-testid="pie-chart"');
+      expect(htmlDonutAgg).toContain('data-testid="pie-series"');
+    });
   });
 });
