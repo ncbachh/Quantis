@@ -1229,4 +1229,209 @@ describe("PresentationView Component — Aggregation Integration", () => {
       expect(html).toContain("Note: Sample size N = 4");
     });
   });
+
+  describe("Task 4: Data Labels & Precision Formatting in PresentationView", () => {
+    const dataLabelDataset: Dataset = {
+      id: "ds_datalabels_test",
+      name: "Performance Dataset",
+      rows: 4,
+      columns: 3,
+      columnNames: ["Category", "MetricA", "MetricB"],
+      preview: [
+        ["Category", "MetricA", "MetricB"],
+        ["Cat1", "10.555", "20.123"],
+        ["Cat1", "12.444", "22.333"],
+        ["Cat2", "15.000", "25.000"],
+      ],
+      data: [
+        ["Category", "MetricA", "MetricB"],
+        ["Cat1", "10.555", "20.123"],
+        ["Cat1", "12.444", "22.333"],
+        ["Cat2", "15.000", "25.000"],
+      ],
+      variables: {
+        Category: { name: "Category", label: "Category", type: "string", measure: "nominal", decimals: 0, align: "left" },
+        MetricA: { name: "MetricA", label: "Metric A", type: "numeric", measure: "scale", decimals: 2, align: "right" },
+        MetricB: { name: "MetricB", label: "Metric B", type: "numeric", measure: "scale", decimals: 2, align: "right" },
+      },
+      sourceFormat: "csv",
+      createdAt: "2026-10-22",
+      updatedAt: "2026-10-22",
+    };
+
+    it("initializes pie and donut slice labels to visible by default, and hides them when showDataLabels is false", () => {
+      // Pie default (visible)
+      const htmlPieDefault = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={dataLabelDataset}
+          chartType="pie"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Category" }}
+        />
+      );
+      expect(htmlPieDefault).toContain('data-testid="pie-series"');
+      expect(htmlPieDefault).toContain('data-label="custom-formatter"');
+
+      // Pie toggled off
+      const htmlPieOff = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={dataLabelDataset}
+          chartType="pie"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Category", showDataLabels: false }}
+        />
+      );
+      expect(htmlPieOff).toContain('data-testid="pie-series"');
+      expect(htmlPieOff).toContain('data-label="false"');
+
+      // Donut default (visible)
+      const htmlDonutDefault = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={dataLabelDataset}
+          chartType="donut"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Category" }}
+        />
+      );
+      expect(htmlDonutDefault).toContain('data-testid="pie-series"');
+      expect(htmlDonutDefault).toContain('data-label="custom-formatter"');
+
+      // Donut toggled off
+      const htmlDonutOff = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={dataLabelDataset}
+          chartType="donut"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Category", showDataLabels: false }}
+        />
+      );
+      expect(htmlDonutOff).toContain('data-testid="pie-series"');
+      expect(htmlDonutOff).toContain('data-label="false"');
+    });
+
+    it("renders data labels on histogram, area, and radar when showDataLabels is enabled", () => {
+      // Histogram with data labels
+      const htmlHistOn = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={dataLabelDataset}
+          chartType="histogram"
+          setChartType={() => {}}
+          initialControls={{ histogramCol: "MetricA" }}
+          initialConfig={{ showDataLabels: true, decimals: 1 }}
+        />
+      );
+      expect(htmlHistOn).toContain('data-testid="label-list"');
+      expect(htmlHistOn).toContain('data-key="count"');
+
+      // Histogram without data labels
+      const htmlHistOff = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={dataLabelDataset}
+          chartType="histogram"
+          setChartType={() => {}}
+          initialControls={{ histogramCol: "MetricA" }}
+          initialConfig={{ showDataLabels: false }}
+        />
+      );
+      expect(htmlHistOff).not.toContain('data-testid="label-list"');
+
+      // Area with data labels
+      const htmlAreaOn = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={dataLabelDataset}
+          chartType="area"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Category", yCol: "MetricA", showDataLabels: true, decimals: 2 }}
+        />
+      );
+      expect(htmlAreaOn).toContain('data-testid="label-list"');
+      expect(htmlAreaOn).toContain('data-key="y"');
+
+      // Area without data labels
+      const htmlAreaOff = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={dataLabelDataset}
+          chartType="area"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Category", yCol: "MetricA", showDataLabels: false }}
+        />
+      );
+      expect(htmlAreaOff).not.toContain('data-testid="label-list"');
+
+      // Radar with data labels
+      const htmlRadarOn = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={dataLabelDataset}
+          chartType="radar"
+          setChartType={() => {}}
+          initialControls={{ radarGroupCol: "Category", radarNumericCols: ["MetricA", "MetricB"] }}
+          initialConfig={{ showDataLabels: true, decimals: 2 }}
+        />
+      );
+      expect(htmlRadarOn).toContain('data-testid="label-list"');
+      expect(htmlRadarOn).toContain('data-key="Cat1"');
+
+      // Radar without data labels
+      const htmlRadarOff = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={dataLabelDataset}
+          chartType="radar"
+          setChartType={() => {}}
+          initialControls={{ radarGroupCol: "Category", radarNumericCols: ["MetricA", "MetricB"] }}
+          initialConfig={{ showDataLabels: false }}
+        />
+      );
+      expect(htmlRadarOff).not.toContain('data-testid="label-list"');
+    });
+
+    it("does not render data labels for density, box, and heatmap even if showDataLabels is true", () => {
+      // Density
+      const htmlDensity = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={dataLabelDataset}
+          chartType="density"
+          setChartType={() => {}}
+          initialControls={{ densityGroupCol: "Category", densityValueCol: "MetricA" }}
+          initialConfig={{ showDataLabels: true }}
+        />
+      );
+      expect(htmlDensity).not.toContain('data-testid="label-list"');
+
+      // Box plot
+      const htmlBox = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={dataLabelDataset}
+          chartType="box"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Category", yCol: "MetricA", showDataLabels: true }}
+        />
+      );
+      expect(htmlBox).not.toContain('data-testid="label-list"');
+
+      // Heatmap
+      const htmlHeatmap = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={dataLabelDataset}
+          chartType="heatmap"
+          setChartType={() => {}}
+          initialControls={{ heatmapCorrMethod: "pearson" }}
+          initialConfig={{ showDataLabels: true }}
+        />
+      );
+      expect(htmlHeatmap).not.toContain('data-testid="label-list"');
+    });
+  });
 });
