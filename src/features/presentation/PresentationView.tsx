@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Download, Copy, SlidersHorizontal } from "lucide-react";
+import { Download, Copy, SlidersHorizontal, PanelRightClose, PanelRightOpen } from "lucide-react";
 import {
   ResponsiveContainer,
   ScatterChart,
@@ -717,44 +717,34 @@ export function PresentationView({
       <div ref={chartContainerRef} className="w-full max-w-full">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           <div className="flex flex-wrap items-center gap-4">
-        <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 shrink-0">
-          {({ bar: t("presentationView.chartTypeBar"), line: t("presentationView.chartTypeLine"), scatter: t("presentationView.chartTypeScatter"), histogram: t("presentationView.chartTypeHistogram"), box: t("presentationView.chartTypeBox"), heatmap: t("presentationView.chartTypeHeatmap"), pie: t("presentationView.chartTypePie"), stackedBar: t("presentationView.chartTypeStackedBar"), barH: t("presentationView.chartTypeBarH"), area: t("presentationView.chartTypeArea"), donut: t("presentationView.chartTypeDonut"), density: t("presentationView.chartTypeDensity"), radar: t("presentationView.chartTypeRadar") } as Record<string, string>)[chartType] ?? chartType}
-        </span>
-        <button
-          type="button"
-          data-testid="inspector-toggle-btn"
-          onClick={() => setIsInspectorOpen((prev) => !prev)}
-          className="px-2.5 py-1 text-xs font-medium rounded-md border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5 transition-colors"
-          title={t("presentationView.inspectorTitle")}
-        >
-          <SlidersHorizontal className="w-3.5 h-3.5 text-primary-600" />
-          <span>{t("presentationView.inspectorTitle")}</span>
-        </button>
-        {chartType === "stackedBar" && (
-          <div className="flex flex-wrap gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">{t("presentationView.axisXCategoryLabel")}</label>
-              <select value={xCol} onChange={(e) => setXCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-                <option value="">{t("analysisView.selectPlaceholder")}</option>
-                {cols.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">{t("presentationView.stackByLabel")}</label>
-              <select value={stackByCol} onChange={(e) => setStackByCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-                <option value="">{t("analysisView.selectPlaceholder")}</option>
-                {cols.filter((c) => c !== xCol).map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">{t("presentationView.valueNumericLabel")}</label>
-              <select value={yCol} onChange={(e) => setYCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
-                <option value="">{t("analysisView.selectPlaceholder")}</option>
-                {numericCols.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-          </div>
-        )}
+            <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 shrink-0">
+              {({ bar: t("presentationView.chartTypeBar"), line: t("presentationView.chartTypeLine"), scatter: t("presentationView.chartTypeScatter"), histogram: t("presentationView.chartTypeHistogram"), box: t("presentationView.chartTypeBox"), heatmap: t("presentationView.chartTypeHeatmap"), pie: t("presentationView.chartTypePie"), stackedBar: t("presentationView.chartTypeStackedBar"), barH: t("presentationView.chartTypeBarH"), area: t("presentationView.chartTypeArea"), donut: t("presentationView.chartTypeDonut"), density: t("presentationView.chartTypeDensity"), radar: t("presentationView.chartTypeRadar") } as Record<string, string>)[chartType] ?? chartType}
+            </span>
+            {chartType === "stackedBar" && (
+              <div className="flex flex-wrap gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t("presentationView.axisXCategoryLabel")}</label>
+                  <select value={xCol} onChange={(e) => setXCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
+                    <option value="">{t("analysisView.selectPlaceholder")}</option>
+                    {cols.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t("presentationView.stackByLabel")}</label>
+                  <select value={stackByCol} onChange={(e) => setStackByCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
+                    <option value="">{t("analysisView.selectPlaceholder")}</option>
+                    {cols.filter((c) => c !== xCol).map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">{t("presentationView.valueNumericLabel")}</label>
+                  <select value={yCol} onChange={(e) => setYCol(e.target.value)} className="rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2">
+                    <option value="">{t("analysisView.selectPlaceholder")}</option>
+                    {numericCols.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
           <AIAssistPanel
             context={visualizationContext}
@@ -1402,7 +1392,7 @@ export function PresentationView({
         {chartType === "barH" && (!xCol || (hasLegend ? pivotedBarData.length === 0 : barChartData.length === 0)) && <p className="text-neutral-500 text-sm">{t("presentationView.barHEmptyHint")}</p>}
         {chartType === "dashboard" && dashboardStats.length === 0 && !(dashboardCorrResult && dashboardCorrResult.columnNames.length >= 2) && <p className="text-neutral-500 text-sm">{t("presentationView.dashboardEmptyHint")}</p>}
           </div>
-          {isInspectorOpen && (
+          {isInspectorOpen ? (
             <ChartInspectorPanel
               chartType={chartType}
               dataset={selectedDataset ?? null}
@@ -1411,7 +1401,23 @@ export function PresentationView({
               controls={chartControls}
               onControlsChange={handleControlsChange}
               onExportCsv={chartType === "heatmap" ? handleExportHeatmapCsv : undefined}
+              onClose={() => setIsInspectorOpen(false)}
             />
+          ) : (
+            <button
+              type="button"
+              data-testid="inspector-toggle-btn"
+              onClick={() => setIsInspectorOpen(true)}
+              className="w-10 self-stretch min-h-[380px] bg-white dark:bg-neutral-900 border border-neutral-200/90 dark:border-neutral-800 rounded-xl hover:border-primary-400 dark:hover:border-primary-600 hover:bg-neutral-50/70 dark:hover:bg-neutral-800/50 flex flex-col items-center py-4 gap-3 text-neutral-500 hover:text-primary-600 dark:text-neutral-400 dark:hover:text-primary-400 transition-all shadow-2xs group cursor-pointer sticky top-4 shrink-0"
+              title={t("presentationView.inspectorTitle")}
+              aria-label={t("presentationView.inspectorTitle")}
+            >
+              <PanelRightOpen className="w-4 h-4 group-hover:scale-110 transition-transform text-neutral-600 dark:text-neutral-300 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span className="[writing-mode:vertical-rl] rotate-180 text-[11px] font-semibold tracking-wider uppercase text-neutral-500 dark:text-neutral-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors mt-2 select-none">
+                {t("presentationView.inspectorTitle")}
+              </span>
+            </button>
           )}
         </div>
       </div>
