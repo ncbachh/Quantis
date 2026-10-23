@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { ChartInspectorPanel } from "../ChartInspectorPanel";
+import { ChartInspectorPanel, usesConfigAxes } from "../ChartInspectorPanel";
 import { setLocale, t } from "@/i18n";
 import { DEFAULT_CHART_CONFIG, DEFAULT_CHART_CONTROLS, type Dataset, type ChartConfig } from "@/types";
 
@@ -368,5 +368,88 @@ describe("ChartInspectorPanel Component", () => {
     expect(htmlRadar).toContain('data-testid="radar-group-col-select"');
     expect(htmlRadar).toContain('data-testid="radar-axis-checkbox-Satisfaction"');
     expect(htmlRadar).toContain(t("presentationView.numericAxesLabel"));
+  });
+
+  describe("Task 1: Axis Unification in Inspector", () => {
+    it("restricts usesConfigAxes strictly to academic charts", () => {
+      expect(usesConfigAxes("bar")).toBe(true);
+      expect(usesConfigAxes("barH")).toBe(true);
+      expect(usesConfigAxes("line")).toBe(true);
+      expect(usesConfigAxes("scatter")).toBe(true);
+      expect(usesConfigAxes("pie")).toBe(false);
+      expect(usesConfigAxes("donut")).toBe(false);
+      expect(usesConfigAxes("area")).toBe(false);
+      expect(usesConfigAxes("box")).toBe(false);
+      expect(usesConfigAxes("histogram")).toBe(false);
+      expect(usesConfigAxes("heatmap")).toBe(false);
+      expect(usesConfigAxes("density")).toBe(false);
+      expect(usesConfigAxes("radar")).toBe(false);
+    });
+
+    it("binds pie, donut, area, and box X/Y selectors to chartConfig xCol and yCol", () => {
+      const configWithAxes: ChartConfig = {
+        ...DEFAULT_CHART_CONFIG,
+        xCol: "Department",
+        yCol: "Satisfaction",
+      };
+
+      // Pie chart
+      const htmlPie = renderToStaticMarkup(
+        <ChartInspectorPanel
+          chartType="pie"
+          dataset={mockDataset}
+          config={configWithAxes}
+          controls={DEFAULT_CHART_CONTROLS}
+          onChange={() => {}}
+        />
+      );
+      expect(htmlPie).toContain('data-testid="pie-x-col-select"');
+      expect(htmlPie).toContain('data-testid="pie-y-col-select"');
+      expect(htmlPie).toMatch(/<select[^>]*data-testid="pie-x-col-select"[^>]*>[\s\S]*?<option[^>]*value="Department"[^>]*selected=""/);
+      expect(htmlPie).toMatch(/<select[^>]*data-testid="pie-y-col-select"[^>]*>[\s\S]*?<option[^>]*value="Satisfaction"[^>]*selected=""/);
+
+      // Donut chart
+      const htmlDonut = renderToStaticMarkup(
+        <ChartInspectorPanel
+          chartType="donut"
+          dataset={mockDataset}
+          config={configWithAxes}
+          controls={DEFAULT_CHART_CONTROLS}
+          onChange={() => {}}
+        />
+      );
+      expect(htmlDonut).toContain('data-testid="donut-cat-col-select"');
+      expect(htmlDonut).toMatch(/<select[^>]*data-testid="donut-cat-col-select"[^>]*>[\s\S]*?<option[^>]*value="Department"[^>]*selected=""/);
+
+      // Area chart
+      const htmlArea = renderToStaticMarkup(
+        <ChartInspectorPanel
+          chartType="area"
+          dataset={mockDataset}
+          config={configWithAxes}
+          controls={DEFAULT_CHART_CONTROLS}
+          onChange={() => {}}
+        />
+      );
+      expect(htmlArea).toContain('data-testid="area-x-col-select"');
+      expect(htmlArea).toContain('data-testid="area-y-col-select"');
+      expect(htmlArea).toMatch(/<select[^>]*data-testid="area-x-col-select"[^>]*>[\s\S]*?<option[^>]*value="Department"[^>]*selected=""/);
+      expect(htmlArea).toMatch(/<select[^>]*data-testid="area-y-col-select"[^>]*>[\s\S]*?<option[^>]*value="Satisfaction"[^>]*selected=""/);
+
+      // Box plot
+      const htmlBox = renderToStaticMarkup(
+        <ChartInspectorPanel
+          chartType="box"
+          dataset={mockDataset}
+          config={configWithAxes}
+          controls={DEFAULT_CHART_CONTROLS}
+          onChange={() => {}}
+        />
+      );
+      expect(htmlBox).toContain('data-testid="box-group-col-select"');
+      expect(htmlBox).toContain('data-testid="box-value-col-select"');
+      expect(htmlBox).toMatch(/<select[^>]*data-testid="box-group-col-select"[^>]*>[\s\S]*?<option[^>]*value="Department"[^>]*selected=""/);
+      expect(htmlBox).toMatch(/<select[^>]*data-testid="box-value-col-select"[^>]*>[\s\S]*?<option[^>]*value="Satisfaction"[^>]*selected=""/);
+    });
   });
 });

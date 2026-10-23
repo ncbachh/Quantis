@@ -135,8 +135,6 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
 };
 
 export interface ChartControls {
-  xCol: string;
-  yCol: string;
   histogramCol: string;
   showHistogramDensity: boolean;
   heatmapCorrMethod: "pearson" | "spearman" | "kendall";
@@ -150,8 +148,6 @@ export interface ChartControls {
 }
 
 export const DEFAULT_CHART_CONTROLS: ChartControls = {
-  xCol: "",
-  yCol: "",
   histogramCol: "",
   showHistogramDensity: false,
   heatmapCorrMethod: "pearson",

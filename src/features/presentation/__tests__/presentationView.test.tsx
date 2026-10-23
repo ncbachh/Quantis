@@ -63,7 +63,35 @@ vi.mock("recharts", async (importOriginal) => {
         {name}
       </div>
     ),
-    Pie: () => null,
+    AreaChart: ({ children, data }: any) => (
+      <div data-testid="area-chart" data-chart-data={JSON.stringify(data)}>
+        {children}
+      </div>
+    ),
+    Area: ({ name, dataKey, children }: any) => (
+      <div data-testid="area-series" data-name={name} data-key={dataKey}>
+        {children}
+      </div>
+    ),
+    RadarChart: ({ children, data }: any) => (
+      <div data-testid="radar-chart" data-chart-data={JSON.stringify(data)}>
+        {children}
+      </div>
+    ),
+    Radar: ({ name, dataKey, children }: any) => (
+      <div data-testid="radar-series" data-name={name} data-key={dataKey}>
+        {children}
+      </div>
+    ),
+    Pie: ({ children, label, data }: any) => (
+      <div
+        data-testid="pie-series"
+        data-label={typeof label === "function" ? "custom-formatter" : String(label)}
+        data-chart-data={JSON.stringify(data)}
+      >
+        {children}
+      </div>
+    ),
     LabelList: ({ dataKey, position }: any) => (
       <div data-testid="label-list" data-key={dataKey} data-position={position} />
     ),
@@ -975,6 +1003,58 @@ describe("PresentationView Component — Aggregation Integration", () => {
       const [toolbarPart] = html.split('data-testid="chart-inspector-panel"');
       expect(toolbarPart).not.toContain(t("presentationView.groupColumnOptionalLabel"));
       expect(toolbarPart).not.toContain(t("presentationView.numericAxesLabel"));
+    });
+  });
+
+  describe("Task 1: Axis Unification in PresentationView", () => {
+    it("renders pie and donut charts driven by initialConfig.xCol", () => {
+      const htmlPie = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="pie"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Department", yCol: "Score" }}
+        />
+      );
+      expect(htmlPie).toContain('data-testid="pie-chart"');
+
+      const htmlDonut = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="donut"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Department" }}
+        />
+      );
+      expect(htmlDonut).toContain('data-testid="pie-chart"');
+    });
+
+    it("renders area chart driven by initialConfig.xCol and initialConfig.yCol", () => {
+      const htmlArea = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="area"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Department", yCol: "Score" }}
+        />
+      );
+      expect(htmlArea).toContain('data-testid="area-chart"');
+    });
+
+    it("renders box plot driven by initialConfig.xCol and initialConfig.yCol", () => {
+      const htmlBox = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="box"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Department", yCol: "Score" }}
+        />
+      );
+      expect(htmlBox).toContain('data-testid="composed-chart"');
     });
   });
 });

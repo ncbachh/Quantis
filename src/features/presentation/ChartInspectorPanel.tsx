@@ -454,8 +454,8 @@ export function ChartInspectorPanel({
                       <select
                         data-testid={chartType === "pie" ? "pie-x-col-select" : "area-x-col-select"}
                         disabled={disabled || columnNames.length === 0}
-                        value={controls.xCol}
-                        onChange={(e) => onControlsChange({ xCol: e.target.value })}
+                        value={config.xCol}
+                        onChange={(e) => onChange({ xCol: e.target.value })}
                         className={inputControlClass}
                       >
                         <option value="">{t("presentationView.noneOption")}</option>
@@ -473,8 +473,8 @@ export function ChartInspectorPanel({
                       <select
                         data-testid={chartType === "pie" ? "pie-y-col-select" : "area-y-col-select"}
                         disabled={disabled || numericColumns.length === 0}
-                        value={controls.yCol}
-                        onChange={(e) => onControlsChange({ yCol: e.target.value })}
+                        value={config.yCol}
+                        onChange={(e) => onChange({ yCol: e.target.value })}
                         className={inputControlClass}
                       >
                         <option value="">{t("presentationView.noneOption")}</option>
@@ -496,10 +496,11 @@ export function ChartInspectorPanel({
                     <select
                       data-testid="donut-cat-col-select"
                       disabled={disabled || columnNames.length === 0}
-                      value={controls.xCol}
-                      onChange={(e) =>
-                        onControlsChange({ xCol: e.target.value, pieBinNumeric: false })
-                      }
+                      value={config.xCol}
+                      onChange={(e) => {
+                        onChange({ xCol: e.target.value });
+                        onControlsChange?.({ pieBinNumeric: false });
+                      }}
                       className={inputControlClass}
                     >
                       <option value="">{t("presentationView.noneOption")}</option>
@@ -545,8 +546,8 @@ export function ChartInspectorPanel({
                       <select
                         data-testid="box-group-col-select"
                         disabled={disabled || columnNames.length === 0}
-                        value={controls.xCol}
-                        onChange={(e) => onControlsChange({ xCol: e.target.value })}
+                        value={config.xCol}
+                        onChange={(e) => onChange({ xCol: e.target.value })}
                         className={inputControlClass}
                       >
                         <option value="">{t("presentationView.noneOption")}</option>
@@ -564,8 +565,8 @@ export function ChartInspectorPanel({
                       <select
                         data-testid="box-value-col-select"
                         disabled={disabled || numericColumns.length === 0}
-                        value={controls.yCol}
-                        onChange={(e) => onControlsChange({ yCol: e.target.value })}
+                        value={config.yCol}
+                        onChange={(e) => onChange({ yCol: e.target.value })}
                         className={inputControlClass}
                       >
                         <option value="">{t("presentationView.noneOption")}</option>

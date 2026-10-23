@@ -106,8 +106,6 @@ export function PresentationView({
     ...initialConfig,
   }));
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
-  const [chartXCol, setChartXCol] = useState(initialXCol);
-  const [chartYCol, setChartYCol] = useState(initialYCol);
   const [yAggregation, setYAggregation] = useState<AggregateFunction>(initialYAggregation);
   const [histogramCol, setHistogramCol] = useState("");
   const [showHistogramDensity, setShowHistogramDensity] = useState(false);
@@ -130,13 +128,13 @@ export function PresentationView({
   const PIE_COLORS = ["#0061bb", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4"];
 
   useEffect(() => {
-    if (tab !== "visualization" || !selectedDataset || chartType !== "box" || !chartXCol || !chartYCol || !analysisBackendAvailable) {
+    if (tab !== "visualization" || !selectedDataset || chartType !== "box" || !chartConfig.xCol || !chartConfig.yCol || !analysisBackendAvailable) {
       setBoxStatsBackendResult(null);
       return;
     }
     const rows = getDataRows(selectedDataset);
-    quantisApi.analyzeBoxStats(rows, chartXCol, chartYCol).then(setBoxStatsBackendResult);
-  }, [tab, selectedDataset?.id, chartType, chartXCol, chartYCol, analysisBackendAvailable]);
+    quantisApi.analyzeBoxStats(rows, chartConfig.xCol, chartConfig.yCol).then(setBoxStatsBackendResult);
+  }, [tab, selectedDataset?.id, chartType, chartConfig.xCol, chartConfig.yCol, analysisBackendAvailable]);
 
   useEffect(() => {
     if (tab !== "visualization" || !selectedDataset || chartType !== "histogram" || !histogramCol || !analysisBackendAvailable) {
@@ -154,16 +152,11 @@ export function PresentationView({
   if (tab === "visualization" && selectedDataset) {
     const rows = getDataRows(selectedDataset);
     const cols = selectedDataset.columnNames || [];
-    const hasConfigAxes = usesConfigAxes(chartType);
-    const xCol = hasConfigAxes ? chartConfig.xCol : chartXCol;
-    const setXCol = hasConfigAxes
-      ? (val: string) => setChartConfig((c) => ({ ...c, xCol: val }))
-      : setChartXCol;
-    const yCol = hasConfigAxes ? chartConfig.yCol : chartYCol;
-    const setYCol = hasConfigAxes
-      ? (val: string) => setChartConfig((c) => ({ ...c, yCol: val }))
-      : setChartYCol;
-    const activeYAggregation = hasConfigAxes ? chartConfig.aggregation : yAggregation;
+    const xCol = chartConfig.xCol;
+    const setXCol = (val: string) => setChartConfig((c) => ({ ...c, xCol: val }));
+    const yCol = chartConfig.yCol;
+    const setYCol = (val: string) => setChartConfig((c) => ({ ...c, yCol: val }));
+    const activeYAggregation = usesConfigAxes(chartType) ? chartConfig.aggregation : yAggregation;
     const numericCols = rows.length >= 2 ? cols.filter((c) => { const ci = rows[0].indexOf(c); const vals = rows.slice(1).map((r) => r[ci]); return vals.every((v) => v === "" || !Number.isNaN(Number(v))); }) : [];
     const xIdx = cols.indexOf(xCol);
     const yIdx = cols.indexOf(yCol);
@@ -357,7 +350,7 @@ export function PresentationView({
     const summaryStats = (chartType === "summary" && rows.length >= 2) ? computeDescriptive(rows) : [];
     const dashboardCorrResult = (chartType === "dashboard" && rows.length >= 2) ? computeCorrelationMatrix(rows, "pearson") : null;
     const dashboardStats = (chartType === "dashboard" && rows.length >= 2) ? computeDescriptive(rows) : [];
-    const multiLineXIdx = chartType === "multiLine" && chartXCol ? cols.indexOf(chartXCol) : -1;
+    const multiLineXIdx = chartType === "multiLine" && xCol ? cols.indexOf(xCol) : -1;
     const multiLineData = (chartType === "multiLine" && multiLineXIdx >= 0 && multiLineYCols.length > 0 && rows.length >= 2) ? (() => {
       const yIndices = multiLineYCols.map((c) => cols.indexOf(c)).filter((i) => i >= 0);
       if (yIndices.length === 0) return [];
@@ -575,7 +568,7 @@ export function PresentationView({
       chartType === "radar" && radarNumericCols.length > 0
         ? `${t("presentationView.contextAxesLabel")} ${radarNumericCols.slice(0, 6).join(", ")}${radarNumericCols.length > 6 ? "..." : ""}.`
         : "",
-      chartType === "multiLine" && chartXCol ? `${t("presentationView.axisXLabel")}: ${chartXCol}, ${t("presentationView.contextMultiLineSuffix")}` : "",
+      chartType === "multiLine" && xCol ? `${t("presentationView.axisXLabel")}: ${xCol}, ${t("presentationView.contextMultiLineSuffix")}` : "",
       chartType === "crosstab" && crosstabCol1 && crosstabCol2
         ? `${t("presentationView.contextCrosstabLabel")} ${crosstabCol1} × ${crosstabCol2}.`
         : "",
@@ -677,8 +670,6 @@ export function PresentationView({
     };
 
     const chartControls: ChartControls = {
-      xCol: chartXCol,
-      yCol: chartYCol,
       histogramCol,
       showHistogramDensity,
       heatmapCorrMethod,
@@ -692,8 +683,6 @@ export function PresentationView({
     };
 
     const handleControlsChange = (patch: Partial<ChartControls>) => {
-      if (patch.xCol !== undefined) setChartXCol(patch.xCol);
-      if (patch.yCol !== undefined) setChartYCol(patch.yCol);
       if (patch.histogramCol !== undefined) setHistogramCol(patch.histogramCol);
       if (patch.showHistogramDensity !== undefined) setShowHistogramDensity(patch.showHistogramDensity);
       if (patch.heatmapCorrMethod !== undefined) setHeatmapCorrMethod(patch.heatmapCorrMethod);
