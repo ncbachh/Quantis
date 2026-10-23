@@ -212,4 +212,59 @@ describe("i18n Core Engine", () => {
       }
     });
   });
+
+  describe("Task 2: Smart Titles i18n Dictionary", () => {
+    const autoTitleKeys = [
+      "presentationView.autoTitlePieCategorical",
+      "presentationView.autoTitlePieBinned",
+      "presentationView.autoTitleHistogram",
+      "presentationView.autoTitleBox",
+      "presentationView.autoTitleArea",
+      "presentationView.autoTitleDensityGrouped",
+      "presentationView.autoTitleDensitySingle",
+      "presentationView.autoTitleHeatmap",
+      "presentationView.autoTitleRadarGrouped",
+      "presentationView.autoTitleRadarNoGroup",
+    ];
+
+    it("has all smart title template keys defined in both English and Vietnamese with 100% parity", () => {
+      for (const key of autoTitleKeys) {
+        setLocale("en");
+        const enVal = t(key);
+        expect(enVal, `Missing English key: ${key}`).not.toBe(key);
+
+        setLocale("vi");
+        const viVal = t(key);
+        expect(viVal, `Missing Vietnamese key: ${key}`).not.toBe(key);
+      }
+    });
+
+    it("verifies accurate translations and parameter interpolation for all smart title templates", () => {
+      // English
+      setLocale("en");
+      expect(t("presentationView.autoTitlePieCategorical", { x: "Department" })).toBe("Distribution of Department");
+      expect(t("presentationView.autoTitlePieBinned", { col: "Score" })).toBe("Distribution of Score (Binned)");
+      expect(t("presentationView.autoTitleHistogram", { col: "Score" })).toBe("Frequency Distribution of Score");
+      expect(t("presentationView.autoTitleBox", { x: "Department", y: "Score" })).toBe("Distribution of Score by Department");
+      expect(t("presentationView.autoTitleArea", { x: "Department", y: "Score" })).toBe("Score by Department");
+      expect(t("presentationView.autoTitleDensityGrouped", { x: "Department", y: "Score" })).toBe("Density Estimation of Score by Department");
+      expect(t("presentationView.autoTitleDensitySingle", { y: "Score" })).toBe("Density Estimation of Score");
+      expect(t("presentationView.autoTitleHeatmap", { method: "Pearson" })).toBe("Pearson Correlation Matrix");
+      expect(t("presentationView.autoTitleRadarGrouped", { group: "Department" })).toBe("Radar Profile by Department");
+      expect(t("presentationView.autoTitleRadarNoGroup")).toBe("Multi-axis Radar Chart");
+
+      // Vietnamese
+      setLocale("vi");
+      expect(t("presentationView.autoTitlePieCategorical", { x: "Phòng ban" })).toBe("Phân phối của Phòng ban");
+      expect(t("presentationView.autoTitlePieBinned", { col: "Điểm" })).toBe("Phân phối theo khoảng Điểm");
+      expect(t("presentationView.autoTitleHistogram", { col: "Điểm" })).toBe("Phân phối tần số Điểm");
+      expect(t("presentationView.autoTitleBox", { x: "Phòng ban", y: "Điểm" })).toBe("Phân phối Điểm theo Phòng ban");
+      expect(t("presentationView.autoTitleArea", { x: "Phòng ban", y: "Điểm" })).toBe("Điểm theo Phòng ban");
+      expect(t("presentationView.autoTitleDensityGrouped", { x: "Phòng ban", y: "Điểm" })).toBe("Ước lượng mật độ Điểm theo Phòng ban");
+      expect(t("presentationView.autoTitleDensitySingle", { y: "Điểm" })).toBe("Ước lượng mật độ Điểm");
+      expect(t("presentationView.autoTitleHeatmap", { method: "Pearson" })).toBe("Ma trận tương quan Pearson");
+      expect(t("presentationView.autoTitleRadarGrouped", { group: "Phòng ban" })).toBe("Hồ sơ đa chiều theo Phòng ban");
+      expect(t("presentationView.autoTitleRadarNoGroup")).toBe("Biểu đồ radar đa chiều");
+    });
+  });
 });
