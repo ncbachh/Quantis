@@ -190,6 +190,20 @@ describe("ChartInspectorPanel Component", () => {
     expect(html).not.toContain(toHtmlEntities(t("presentationView.errorBarMeanOnlyNotice")));
   });
 
+  it("defaults error-bar to 'none' (Off) in DEFAULT_CHART_CONFIG", () => {
+    expect(DEFAULT_CHART_CONFIG.errorBar).toBe("none");
+    const html = renderToStaticMarkup(
+      <ChartInspectorPanel
+        chartType="bar"
+        dataset={mockDataset}
+        config={DEFAULT_CHART_CONFIG}
+        onChange={() => {}}
+      />
+    );
+    expect(html).toContain('data-testid="error-bar-select"');
+    expect(html).toContain('<option value="none" selected=""');
+  });
+
   it("renders variable labels in option elements alongside raw names", () => {
     const html = renderToStaticMarkup(
       <ChartInspectorPanel

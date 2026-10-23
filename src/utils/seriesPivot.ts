@@ -52,7 +52,7 @@ export function calculateErrorOffsets(
 export function pivotByLegend(
   groups: AggregatedGroup[],
   legendCol: string,
-  errorType: ErrorBarType = "ci95"
+  errorType: ErrorBarType = "none"
 ): PivotedSeries[] {
   if (!groups || !Array.isArray(groups) || groups.length === 0) {
     return [];

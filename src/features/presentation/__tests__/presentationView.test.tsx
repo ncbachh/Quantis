@@ -461,6 +461,24 @@ describe("PresentationView Component — Aggregation Integration", () => {
   });
 
   describe("Error Bars on Academic Charts", () => {
+    it("does not render ErrorBar by default when errorBar is not specified (defaults to none/Off)", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={sampleDataset}
+          chartType="bar"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            yCol: "Score",
+            aggregation: "mean",
+          }}
+        />
+      );
+
+      expect(html).not.toContain('data-testid="error-bar"');
+    });
+
     it("renders ErrorBar inside Bar when aggregation is mean and errorBar is ci95 (single series)", () => {
       const html = renderToStaticMarkup(
         <PresentationView

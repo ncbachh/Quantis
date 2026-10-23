@@ -124,7 +124,7 @@ export const DEFAULT_CHART_CONFIG: ChartConfig = {
   legendCol: "",
   aggregation: "mean",
   barMode: "clustered",
-  errorBar: "ci95",
+  errorBar: "none",
   palette: "academic",
   titleOverride: "",
   subtitle: "",
