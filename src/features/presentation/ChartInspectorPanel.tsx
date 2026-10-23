@@ -14,6 +14,10 @@ export const usesConfigAxes = (chartType: string): boolean =>
 export const supportsLegend = (chartType: string): boolean =>
   ["bar", "barH", "line", "scatter"].includes(chartType);
 
+/** Charts that support data labels. */
+export const supportsDataLabels = (chartType: string): boolean =>
+  ["bar", "barH", "line", "pie", "donut", "histogram", "area", "radar"].includes(chartType);
+
 /** All 12 reachable charts support auto title generation. */
 export const supportsAutoTitle = (chartType: string): boolean =>
   [
@@ -352,89 +356,6 @@ export function ChartInspectorPanel({
                 </div>
               </details>
             )}
-
-            {/* Accordion 4: Labels & Typography */}
-            <details open className="group">
-              <summary className="w-full px-4 py-3 flex items-center justify-between font-semibold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-50/80 dark:hover:bg-neutral-800/40 cursor-pointer select-none transition-colors list-none [&::-webkit-details-marker]:hidden focus:outline-none focus-visible:bg-neutral-50 dark:focus-visible:bg-neutral-800/50">
-                <span className="flex items-center gap-2">
-                  <Type className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors" />
-                  <span>{t("presentationView.accordionLabels")}</span>
-                </span>
-                <ChevronDown className="w-3.5 h-3.5 text-neutral-400 group-open:rotate-180 transition-transform duration-200 ease-out" />
-              </summary>
-              <div className="px-4 pb-4 pt-0.5 space-y-3 bg-white dark:bg-neutral-900">
-                {/* Custom Title Override */}
-                <div>
-                  <label className={labelClass}>
-                    {t("presentationView.titleOverrideLabel")}
-                  </label>
-                  <input
-                    type="text"
-                    data-testid="title-override-input"
-                    disabled={disabled}
-                    value={config.titleOverride}
-                    placeholder={t("presentationView.titleOverridePlaceholder")}
-                    onChange={(e) => onChange({ titleOverride: e.target.value })}
-                    className={inputControlClass}
-                  />
-                </div>
-
-                {/* Subtitle / Note */}
-                <div>
-                  <label className={labelClass}>
-                    {t("presentationView.subtitleLabel")}
-                  </label>
-                  <input
-                    type="text"
-                    data-testid="subtitle-input"
-                    disabled={disabled}
-                    value={config.subtitle}
-                    placeholder={t("presentationView.subtitlePlaceholder")}
-                    onChange={(e) => onChange({ subtitle: e.target.value })}
-                    className={inputControlClass}
-                  />
-                </div>
-
-                {/* Data Labels + Decimals */}
-                <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-2.5">
-                  <label className="flex items-center gap-2.5 cursor-pointer select-none group/check py-0.5">
-                    <input
-                      type="checkbox"
-                      data-testid="show-data-labels-checkbox"
-                      disabled={disabled}
-                      checked={config.showDataLabels}
-                      onChange={(e) => onChange({ showDataLabels: e.target.checked })}
-                      className="w-3.5 h-3.5 rounded border-neutral-300 dark:border-neutral-600 text-primary-600 focus:ring-primary-500/20 dark:bg-neutral-800 cursor-pointer"
-                    />
-                    <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 group-hover/check:text-neutral-900 dark:group-hover/check:text-neutral-100 transition-colors">
-                      {t("presentationView.showDataLabelsLabel")}
-                    </span>
-                  </label>
-
-                  {config.showDataLabels && (
-                    <div className="pl-6 pt-1 space-y-1 border-l-2 border-neutral-100 dark:border-neutral-800 ml-1">
-                      <label className={labelClass}>
-                        {t("presentationView.decimalsLabel")}
-                      </label>
-                      <select
-                        data-testid="decimals-select"
-                        disabled={disabled}
-                        value={config.decimals}
-                        onChange={(e) =>
-                          onChange({ decimals: Number(e.target.value) })
-                        }
-                        className={inputControlClass}
-                      >
-                        <option value={0}>0</option>
-                        <option value={1}>1</option>
-                        <option value={2}>2</option>
-                        <option value={3}>3</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </details>
           </>
         ) : (
           <>
@@ -848,6 +769,91 @@ export function ChartInspectorPanel({
             </details>
           </>
         )}
+
+        {/* Universal Accordion: Labels & Typography */}
+        <details open className="group">
+          <summary className="w-full px-4 py-3 flex items-center justify-between font-semibold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-50/80 dark:hover:bg-neutral-800/40 cursor-pointer select-none transition-colors list-none [&::-webkit-details-marker]:hidden focus:outline-none focus-visible:bg-neutral-50 dark:focus-visible:bg-neutral-800/50">
+            <span className="flex items-center gap-2">
+              <Type className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors" />
+              <span>{t("presentationView.accordionLabels")}</span>
+            </span>
+            <ChevronDown className="w-3.5 h-3.5 text-neutral-400 group-open:rotate-180 transition-transform duration-200 ease-out" />
+          </summary>
+          <div className="px-4 pb-4 pt-0.5 space-y-3 bg-white dark:bg-neutral-900">
+            {/* Custom Title Override */}
+            <div>
+              <label className={labelClass}>
+                {t("presentationView.titleOverrideLabel")}
+              </label>
+              <input
+                type="text"
+                data-testid="title-override-input"
+                disabled={disabled}
+                value={config.titleOverride}
+                placeholder={t("presentationView.titleOverridePlaceholder")}
+                onChange={(e) => onChange({ titleOverride: e.target.value })}
+                className={inputControlClass}
+              />
+            </div>
+
+            {/* Subtitle / Note */}
+            <div>
+              <label className={labelClass}>
+                {t("presentationView.subtitleLabel")}
+              </label>
+              <input
+                type="text"
+                data-testid="subtitle-input"
+                disabled={disabled}
+                value={config.subtitle}
+                placeholder={t("presentationView.subtitlePlaceholder")}
+                onChange={(e) => onChange({ subtitle: e.target.value })}
+                className={inputControlClass}
+              />
+            </div>
+
+            {/* Data Labels + Decimals */}
+            {supportsDataLabels(chartType) && (
+              <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-2.5">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none group/check py-0.5">
+                  <input
+                    type="checkbox"
+                    data-testid="show-data-labels-checkbox"
+                    disabled={disabled}
+                    checked={config.showDataLabels}
+                    onChange={(e) => onChange({ showDataLabels: e.target.checked })}
+                    className="w-3.5 h-3.5 rounded border-neutral-300 dark:border-neutral-600 text-primary-600 focus:ring-primary-500/20 dark:bg-neutral-800 cursor-pointer"
+                  />
+                  <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300 group-hover/check:text-neutral-900 dark:group-hover/check:text-neutral-100 transition-colors">
+                    {t("presentationView.showDataLabelsLabel")}
+                  </span>
+                </label>
+
+                {config.showDataLabels && (
+                  <div className="pl-6 pt-1 space-y-1 border-l-2 border-neutral-100 dark:border-neutral-800 ml-1">
+                    <label className={labelClass}>
+                      {t("presentationView.decimalsLabel")}
+                    </label>
+                    <select
+                      data-testid="decimals-select"
+                      disabled={disabled}
+                      value={config.decimals}
+                      onChange={(e) =>
+                        onChange({ decimals: Number(e.target.value) })
+                      }
+                      className={inputControlClass}
+                    >
+                      <option value={0}>0</option>
+                      <option value={1}>1</option>
+                      <option value={2}>2</option>
+                      <option value={3}>3</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </details>
       </div>
     </aside>
   );

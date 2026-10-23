@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { ChartInspectorPanel, usesConfigAxes, supportsAutoTitle } from "../ChartInspectorPanel";
+import { ChartInspectorPanel, usesConfigAxes, supportsAutoTitle, supportsDataLabels } from "../ChartInspectorPanel";
 import { setLocale, t } from "@/i18n";
 import { DEFAULT_CHART_CONFIG, DEFAULT_CHART_CONTROLS, type Dataset, type ChartConfig } from "@/types";
 
@@ -243,7 +243,7 @@ describe("ChartInspectorPanel Component", () => {
       expect(html, `chartType ${chartType} should not have accordionErrorBars`).not.toContain(
         toHtmlEntities(t("presentationView.accordionErrorBars"))
       );
-      expect(html, `chartType ${chartType} should not have accordionLabels`).not.toContain(
+      expect(html, `chartType ${chartType} should have accordionLabels`).toContain(
         toHtmlEntities(t("presentationView.accordionLabels"))
       );
     }
@@ -462,6 +462,74 @@ describe("ChartInspectorPanel Component", () => {
         expect(supportsAutoTitle(ct), `${ct} should support auto title`).toBe(true);
       }
       expect(supportsAutoTitle("unsupported_chart")).toBe(false);
+    });
+  });
+
+  describe("Task 5: Universal Labels & Typography Accordion in Inspector", () => {
+    const all12Charts = [
+      "bar", "barH", "line", "scatter",
+      "pie", "donut", "histogram", "box",
+      "heatmap", "area", "density", "radar"
+    ];
+
+    it("verifies supportsDataLabels predicate", () => {
+      const dataLabelCharts = ["bar", "barH", "line", "pie", "donut", "histogram", "area", "radar"];
+      const nonDataLabelCharts = ["scatter", "box", "density", "heatmap"];
+
+      for (const ct of dataLabelCharts) {
+        expect(supportsDataLabels(ct), `${ct} should support data labels`).toBe(true);
+      }
+      for (const ct of nonDataLabelCharts) {
+        expect(supportsDataLabels(ct), `${ct} should not support data labels`).toBe(false);
+      }
+      expect(supportsDataLabels("unknown")).toBe(false);
+    });
+
+    it("renders Labels & Typography accordion with title override and subtitle for ALL 12 charts", () => {
+      for (const chartType of all12Charts) {
+        const html = renderToStaticMarkup(
+          <ChartInspectorPanel
+            chartType={chartType}
+            dataset={mockDataset}
+            config={DEFAULT_CHART_CONFIG}
+            onChange={() => {}}
+          />
+        );
+        expect(html, `${chartType} must have Labels & Typography accordion`).toContain(
+          toHtmlEntities(t("presentationView.accordionLabels"))
+        );
+        expect(html, `${chartType} must have title override input`).toContain('data-testid="title-override-input"');
+        expect(html, `${chartType} must have subtitle input`).toContain('data-testid="subtitle-input"');
+      }
+    });
+
+    it("renders data labels checkbox only for supported charts, and excludes it for scatter, box, density, and heatmap", () => {
+      const supported = ["bar", "barH", "line", "pie", "donut", "histogram", "area", "radar"];
+      const excluded = ["scatter", "box", "density", "heatmap"];
+
+      for (const chartType of supported) {
+        const html = renderToStaticMarkup(
+          <ChartInspectorPanel
+            chartType={chartType}
+            dataset={mockDataset}
+            config={DEFAULT_CHART_CONFIG}
+            onChange={() => {}}
+          />
+        );
+        expect(html, `${chartType} should have show-data-labels-checkbox`).toContain('data-testid="show-data-labels-checkbox"');
+      }
+
+      for (const chartType of excluded) {
+        const html = renderToStaticMarkup(
+          <ChartInspectorPanel
+            chartType={chartType}
+            dataset={mockDataset}
+            config={DEFAULT_CHART_CONFIG}
+            onChange={() => {}}
+          />
+        );
+        expect(html, `${chartType} should NOT have show-data-labels-checkbox`).not.toContain('data-testid="show-data-labels-checkbox"');
+      }
     });
   });
 });
