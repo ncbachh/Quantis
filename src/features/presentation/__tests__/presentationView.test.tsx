@@ -1057,4 +1057,176 @@ describe("PresentationView Component — Aggregation Integration", () => {
       expect(htmlBox).toContain('data-testid="composed-chart"');
     });
   });
+
+  describe("Task 3: Global Smart Titles & Canvas Title Blocks", () => {
+    const multiColDataset: Dataset = {
+      id: "ds_smart_titles_test",
+      name: "Research Dataset",
+      rows: 4,
+      columns: 4,
+      columnNames: ["Department", "Score", "Performance", "Experience"],
+      preview: [
+        ["Department", "Score", "Performance", "Experience"],
+        ["HR", "80", "85", "5"],
+        ["HR", "82", "88", "6"],
+        ["Sales", "90", "92", "4"],
+        ["Sales", "95", "96", "7"],
+      ],
+      data: [
+        ["Department", "Score", "Performance", "Experience"],
+        ["HR", "80", "85", "5"],
+        ["HR", "82", "88", "6"],
+        ["Sales", "90", "92", "4"],
+        ["Sales", "95", "96", "7"],
+      ],
+      variables: {
+        Department: { name: "Department", label: "Phòng ban", type: "string", measure: "nominal", decimals: 0, align: "left" },
+        Score: { name: "Score", label: "Điểm số", type: "numeric", measure: "scale", decimals: 2, align: "right" },
+        Performance: { name: "Performance", label: "Hiệu suất", type: "numeric", measure: "scale", decimals: 2, align: "right" },
+        Experience: { name: "Experience", label: "Kinh nghiệm", type: "numeric", measure: "scale", decimals: 1, align: "right" },
+      },
+      sourceFormat: "csv",
+      createdAt: "2026-10-22",
+      updatedAt: "2026-10-22",
+    };
+
+    it("renders smart title blocks on pie and donut charts", () => {
+      setLocale("en");
+      const htmlPie = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={multiColDataset}
+          chartType="pie"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Department" }}
+        />
+      );
+      expect(htmlPie).toContain('data-testid="chart-title-block"');
+      expect(htmlPie).toContain('data-testid="chart-title"');
+      expect(htmlPie).toContain("Distribution of Phòng ban");
+
+      const htmlDonut = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={multiColDataset}
+          chartType="donut"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Department" }}
+        />
+      );
+      expect(htmlDonut).toContain('data-testid="chart-title-block"');
+      expect(htmlDonut).toContain("Distribution of Phòng ban");
+    });
+
+    it("renders smart title block on histogram", () => {
+      setLocale("en");
+      const htmlHist = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={multiColDataset}
+          chartType="histogram"
+          setChartType={() => {}}
+          initialControls={{ histogramCol: "Score" }}
+        />
+      );
+      expect(htmlHist).toContain('data-testid="chart-title-block"');
+      expect(htmlHist).toContain("Frequency Distribution of Điểm số");
+    });
+
+    it("renders smart title block on box plot", () => {
+      setLocale("en");
+      const htmlBox = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={multiColDataset}
+          chartType="box"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Department", yCol: "Score" }}
+        />
+      );
+      expect(htmlBox).toContain('data-testid="chart-title-block"');
+      expect(htmlBox).toContain("Distribution of Điểm số by Phòng ban");
+    });
+
+    it("renders smart title block on area chart", () => {
+      setLocale("en");
+      const htmlArea = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={multiColDataset}
+          chartType="area"
+          setChartType={() => {}}
+          initialConfig={{ xCol: "Department", yCol: "Score" }}
+        />
+      );
+      expect(htmlArea).toContain('data-testid="chart-title-block"');
+      expect(htmlArea).toContain("Điểm số by Phòng ban");
+    });
+
+    it("renders smart title block on density estimation chart", () => {
+      setLocale("en");
+      const htmlDensity = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={multiColDataset}
+          chartType="density"
+          setChartType={() => {}}
+          initialControls={{ densityGroupCol: "Department", densityValueCol: "Score" }}
+        />
+      );
+      expect(htmlDensity).toContain('data-testid="chart-title-block"');
+      expect(htmlDensity).toContain("Density Estimation of Điểm số by Phòng ban");
+    });
+
+    it("renders smart title block on heatmap", () => {
+      setLocale("en");
+      const htmlHeatmap = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={multiColDataset}
+          chartType="heatmap"
+          setChartType={() => {}}
+          initialControls={{ heatmapCorrMethod: "spearman" }}
+        />
+      );
+      expect(htmlHeatmap).toContain('data-testid="chart-title-block"');
+      expect(htmlHeatmap).toContain("Spearman Correlation Matrix");
+    });
+
+    it("renders smart title block on radar chart", () => {
+      setLocale("en");
+      const htmlRadar = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={multiColDataset}
+          chartType="radar"
+          setChartType={() => {}}
+          initialControls={{ radarGroupCol: "Department", radarNumericCols: ["Score", "Performance"] }}
+        />
+      );
+      expect(htmlRadar).toContain('data-testid="chart-title-block"');
+      expect(htmlRadar).toContain("Radar Profile by Phòng ban");
+    });
+
+    it("renders title override and subtitle on non-academic charts when provided", () => {
+      const html = renderToStaticMarkup(
+        <PresentationView
+          tab="visualization"
+          selectedDataset={multiColDataset}
+          chartType="pie"
+          setChartType={() => {}}
+          initialConfig={{
+            xCol: "Department",
+            titleOverride: "Figure 1. Department Breakdown",
+            subtitle: "Note: Sample size N = 4",
+          }}
+        />
+      );
+      expect(html).toContain('data-testid="chart-title-block"');
+      expect(html).toContain('data-testid="chart-title"');
+      expect(html).toContain("Figure 1. Department Breakdown");
+      expect(html).toContain('data-testid="chart-subtitle"');
+      expect(html).toContain("Note: Sample size N = 4");
+    });
+  });
 });

@@ -82,6 +82,7 @@ export interface PresentationViewProps {
   initialYCol?: string;
   initialYAggregation?: AggregateFunction;
   initialConfig?: Partial<ChartConfig>;
+  initialControls?: Partial<ChartControls>;
 }
 
 export function PresentationView({
@@ -97,6 +98,7 @@ export function PresentationView({
   initialYCol = "",
   initialYAggregation = "mean",
   initialConfig,
+  initialControls,
 }: PresentationViewProps) {
   const [chartConfig, setChartConfig] = useState<ChartConfig>(() => ({
     ...DEFAULT_CHART_CONFIG,
@@ -107,21 +109,21 @@ export function PresentationView({
   }));
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
   const [yAggregation, setYAggregation] = useState<AggregateFunction>(initialYAggregation);
-  const [histogramCol, setHistogramCol] = useState("");
-  const [showHistogramDensity, setShowHistogramDensity] = useState(false);
+  const [histogramCol, setHistogramCol] = useState(initialControls?.histogramCol ?? "");
+  const [showHistogramDensity, setShowHistogramDensity] = useState(initialControls?.showHistogramDensity ?? false);
   const [stackByCol, setStackByCol] = useState("");
-  const [heatmapCorrMethod, setHeatmapCorrMethod] = useState<"pearson" | "spearman" | "kendall">("pearson");
-  const [radarGroupCol, setRadarGroupCol] = useState("");
-  const [radarNumericCols, setRadarNumericCols] = useState<string[]>([]);
+  const [heatmapCorrMethod, setHeatmapCorrMethod] = useState<"pearson" | "spearman" | "kendall">(initialControls?.heatmapCorrMethod ?? "pearson");
+  const [radarGroupCol, setRadarGroupCol] = useState(initialControls?.radarGroupCol ?? "");
+  const [radarNumericCols, setRadarNumericCols] = useState<string[]>(initialControls?.radarNumericCols ?? []);
   const [multiLineYCols, setMultiLineYCols] = useState<string[]>([]);
   const [crosstabCol1, setCrosstabCol1] = useState("");
   const [crosstabCol2, setCrosstabCol2] = useState("");
   const [barSortOrder, setBarSortOrder] = useState<"none" | "asc" | "desc">("none");
-  const [densityGroupCol, setDensityGroupCol] = useState("");
-  const [densityValueCol, setDensityValueCol] = useState("");
-  const [pieBinNumeric, setPieBinNumeric] = useState(false);
-  const [pieBinCount, setPieBinCount] = useState(4);
-  const [pieNumericCol, setPieNumericCol] = useState("");
+  const [densityGroupCol, setDensityGroupCol] = useState(initialControls?.densityGroupCol ?? "");
+  const [densityValueCol, setDensityValueCol] = useState(initialControls?.densityValueCol ?? "");
+  const [pieBinNumeric, setPieBinNumeric] = useState(initialControls?.pieBinNumeric ?? false);
+  const [pieBinCount, setPieBinCount] = useState(initialControls?.pieBinCount ?? 4);
+  const [pieNumericCol, setPieNumericCol] = useState(initialControls?.pieNumericCol ?? "");
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [boxStatsBackendResult, setBoxStatsBackendResult] = useState<Array<{ group: string; min: number; q1: number; median: number; q3: number; max: number; n: number }> | null>(null);
   const [histBinsBackendResult, setHistBinsBackendResult] = useState<Array<{ binStart: number; binEnd: number; count: number }> | null>(null);
@@ -490,6 +492,52 @@ export function PresentationView({
         const base = `${yLabel} vs ${xLabel}`;
         return hasLegend ? `${base} ${t("presentationView.autoTitleAnd")} ${legendLabel}` : base;
       }
+      if (chartType === "pie" || chartType === "donut") {
+        if (pieBinNumeric) {
+          const col = pieNumericCol || xCol;
+          const colLabel = col ? (variables[col]?.label?.trim() || col) : "";
+          return colLabel ? t("presentationView.autoTitlePieBinned", { col: colLabel }) : "";
+        }
+        return xLabel ? t("presentationView.autoTitlePieCategorical", { x: xLabel }) : "";
+      }
+      if (chartType === "histogram") {
+        const histLabel = histogramCol ? (variables[histogramCol]?.label?.trim() || histogramCol) : "";
+        return histLabel ? t("presentationView.autoTitleHistogram", { col: histLabel }) : "";
+      }
+      if (chartType === "box") {
+        if (xLabel && yLabel) {
+          return t("presentationView.autoTitleBox", { x: xLabel, y: yLabel });
+        }
+        return yLabel || xLabel || "";
+      }
+      if (chartType === "area") {
+        if (xLabel && yLabel) {
+          return t("presentationView.autoTitleArea", { x: xLabel, y: yLabel });
+        }
+        return yLabel || xLabel || "";
+      }
+      if (chartType === "density") {
+        const valLabel = densityValueCol ? (variables[densityValueCol]?.label?.trim() || densityValueCol) : "";
+        const grpLabel = densityGroupCol ? (variables[densityGroupCol]?.label?.trim() || densityGroupCol) : "";
+        if (valLabel && grpLabel) {
+          return t("presentationView.autoTitleDensityGrouped", { x: grpLabel, y: valLabel });
+        }
+        if (valLabel) {
+          return t("presentationView.autoTitleDensitySingle", { y: valLabel });
+        }
+        return "";
+      }
+      if (chartType === "heatmap") {
+        const method = heatmapCorrMethod === "spearman" ? "Spearman" : heatmapCorrMethod === "kendall" ? "Kendall" : "Pearson";
+        return t("presentationView.autoTitleHeatmap", { method });
+      }
+      if (chartType === "radar") {
+        if (radarGroupCol) {
+          const grpLabel = variables[radarGroupCol]?.label?.trim() || radarGroupCol;
+          return t("presentationView.autoTitleRadarGrouped", { group: grpLabel });
+        }
+        return t("presentationView.autoTitleRadarNoGroup");
+      }
       if (isAggregated) {
         const aggPrefix = activeYAggregation === "mean"
           ? t("presentationView.autoTitleMeanOf")
@@ -508,6 +556,13 @@ export function PresentationView({
       : autoTitle;
 
     const effectiveSubtitle = chartConfig.subtitle?.trim() || "";
+
+    const chartTitleBlock = (effectiveTitle || effectiveSubtitle) ? (
+      <div className="mb-3 text-center" data-testid="chart-title-block">
+        {effectiveTitle && <h3 data-testid="chart-title" className="text-base font-semibold text-neutral-800 dark:text-neutral-100">{effectiveTitle}</h3>}
+        {effectiveSubtitle && <p data-testid="chart-subtitle" className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{effectiveSubtitle}</p>}
+      </div>
+    ) : null;
 
     const activeDecimals = chartConfig.decimals ?? (yCol && variables[yCol]?.decimals !== undefined ? variables[yCol].decimals : 2);
     const formatDataLabel = (val: any) => {
@@ -749,12 +804,7 @@ export function PresentationView({
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
             <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
-              {(effectiveTitle || effectiveSubtitle) && (
-                <div className="mb-3 text-center" data-testid="chart-title-block">
-                  {effectiveTitle && <h3 data-testid="chart-title" className="text-base font-semibold text-neutral-800 dark:text-neutral-100">{effectiveTitle}</h3>}
-                  {effectiveSubtitle && <p data-testid="chart-subtitle" className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{effectiveSubtitle}</p>}
-                </div>
-              )}
+              {chartTitleBlock}
               <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -799,19 +849,22 @@ export function PresentationView({
           return (
             <div className="relative group" data-chart-export-wrapper>
               {chartExportIcons}
-              <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={merged} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="x" name={densityValueCol} type="number" tick={{ fontSize: 11 }} />
-                    <YAxis name={t("presentationView.densityYAxisLabel")} tick={{ fontSize: 11 }} />
-                    <Tooltip />
-                    <Legend />
-                    {keys.map((key, i) => (
-                      <Line key={key} type="monotone" dataKey={key} stroke={PIE_COLORS[i % PIE_COLORS.length]} strokeWidth={2} dot={false} name={key} />
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
+              <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+                {chartTitleBlock}
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={merged} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="x" name={densityValueCol} type="number" tick={{ fontSize: 11 }} />
+                      <YAxis name={t("presentationView.densityYAxisLabel")} tick={{ fontSize: 11 }} />
+                      <Tooltip />
+                      <Legend />
+                      {keys.map((key, i) => (
+                        <Line key={key} type="monotone" dataKey={key} stroke={PIE_COLORS[i % PIE_COLORS.length]} strokeWidth={2} dot={false} name={key} />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
           );
@@ -820,12 +873,7 @@ export function PresentationView({
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
             <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
-              {(effectiveTitle || effectiveSubtitle) && (
-                <div className="mb-3 text-center" data-testid="chart-title-block">
-                  {effectiveTitle && <h3 data-testid="chart-title" className="text-base font-semibold text-neutral-800 dark:text-neutral-100">{effectiveTitle}</h3>}
-                  {effectiveSubtitle && <p data-testid="chart-subtitle" className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{effectiveSubtitle}</p>}
-                </div>
-              )}
+              {chartTitleBlock}
               <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={hasLegend ? pivotedBarData : barDataSorted} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -885,12 +933,7 @@ export function PresentationView({
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
             <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
-              {(effectiveTitle || effectiveSubtitle) && (
-                <div className="mb-3 text-center" data-testid="chart-title-block">
-                  {effectiveTitle && <h3 data-testid="chart-title" className="text-base font-semibold text-neutral-800 dark:text-neutral-100">{effectiveTitle}</h3>}
-                  {effectiveSubtitle && <p data-testid="chart-subtitle" className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{effectiveSubtitle}</p>}
-                </div>
-              )}
+              {chartTitleBlock}
               <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={hasLegend ? pivotedBarData : barDataSorted} layout="vertical" margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -950,12 +993,7 @@ export function PresentationView({
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
             <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
-              {(effectiveTitle || effectiveSubtitle) && (
-                <div className="mb-3 text-center" data-testid="chart-title-block">
-                  {effectiveTitle && <h3 data-testid="chart-title" className="text-base font-semibold text-neutral-800 dark:text-neutral-100">{effectiveTitle}</h3>}
-                  {effectiveSubtitle && <p data-testid="chart-subtitle" className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{effectiveSubtitle}</p>}
-                </div>
-              )}
+              {chartTitleBlock}
               <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={hasLegend ? pivotedLineData : lineChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
@@ -1023,65 +1061,74 @@ export function PresentationView({
         {chartType === "pie" && pieData.length > 0 && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
-            <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name} ${(percent != null ? percent * 100 : 0).toFixed(0)}%`}>
-                    {pieData.map((_, i) => (
-                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(v: number) => [v, t("presentationView.barCountLabel")]} />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+              {chartTitleBlock}
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name} ${(percent != null ? percent * 100 : 0).toFixed(0)}%`}>
+                      {pieData.map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(v: number) => [v, t("presentationView.barCountLabel")]} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
         )}
         {chartType === "donut" && pieData.length > 0 && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
-            <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} innerRadius={60} label={({ name, percent }) => `${name} ${(percent != null ? percent * 100 : 0).toFixed(0)}%`}>
-                    {pieData.map((_, i) => (
-                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(v: number) => [v, t("presentationView.barCountLabel")]} />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+              {chartTitleBlock}
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} innerRadius={60} label={({ name, percent }) => `${name} ${(percent != null ? percent * 100 : 0).toFixed(0)}%`}>
+                      {pieData.map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(v: number) => [v, t("presentationView.barCountLabel")]} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
         )}
         {chartType === "box" && boxChartData.length > 0 && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
-            <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4 mb-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={boxChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis domain={boxYDomain} allowDataOverflow />
-                  <Tooltip content={({ active, payload }) => {
-                    if (!active || !payload?.length || !payload[0].payload) return null;
-                    const b = payload[0].payload as { name: string; min: number; q1: number; median: number; q3: number; max: number; n: number };
-                    return (
-                      <div className="rounded-lg border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-800 p-2 text-sm shadow-lg">
-                        <p className="font-medium">{b.name}</p>
-                        <p>n = {b.n} | Min = {b.min.toFixed(2)} | Q1 = {b.q1.toFixed(2)} | Median = {b.median.toFixed(2)} | Q3 = {b.q3.toFixed(2)} | Max = {b.max.toFixed(2)}</p>
-                      </div>
-                    );
-                  }} />
-                  <Bar dataKey="q1" stackId="box" fill="transparent" stroke="none" isAnimationActive={false} legendType="none">
-                    <ErrorBar dataKey="whiskerLow" width={12} stroke="#94a3b8" strokeWidth={1.75} direction="y" />
-                  </Bar>
-                  <Bar dataKey="boxLower" stackId="box" fill="#0061bb" fillOpacity={0.55} stroke="#3b82f6" strokeWidth={1.5} isAnimationActive={false} legendType="none" />
-                  <Bar dataKey="boxUpper" stackId="box" fill="#0061bb" fillOpacity={0.85} stroke="#3b82f6" strokeWidth={1.5} isAnimationActive={false} legendType="none">
-                    <ErrorBar dataKey="whiskerHigh" width={12} stroke="#94a3b8" strokeWidth={1.75} direction="y" />
-                  </Bar>
-                </ComposedChart>
-              </ResponsiveContainer>
+            <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4 mb-2">
+              {chartTitleBlock}
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={boxChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis domain={boxYDomain} allowDataOverflow />
+                    <Tooltip content={({ active, payload }) => {
+                      if (!active || !payload?.length || !payload[0].payload) return null;
+                      const b = payload[0].payload as { name: string; min: number; q1: number; median: number; q3: number; max: number; n: number };
+                      return (
+                        <div className="rounded-lg border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-800 p-2 text-sm shadow-lg">
+                          <p className="font-medium">{b.name}</p>
+                          <p>n = {b.n} | Min = {b.min.toFixed(2)} | Q1 = {b.q1.toFixed(2)} | Median = {b.median.toFixed(2)} | Q3 = {b.q3.toFixed(2)} | Max = {b.max.toFixed(2)}</p>
+                        </div>
+                      );
+                    }} />
+                    <Bar dataKey="q1" stackId="box" fill="transparent" stroke="none" isAnimationActive={false} legendType="none">
+                      <ErrorBar dataKey="whiskerLow" width={12} stroke="#94a3b8" strokeWidth={1.75} direction="y" />
+                    </Bar>
+                    <Bar dataKey="boxLower" stackId="box" fill="#0061bb" fillOpacity={0.55} stroke="#3b82f6" strokeWidth={1.5} isAnimationActive={false} legendType="none" />
+                    <Bar dataKey="boxUpper" stackId="box" fill="#0061bb" fillOpacity={0.85} stroke="#3b82f6" strokeWidth={1.5} isAnimationActive={false} legendType="none">
+                      <ErrorBar dataKey="whiskerHigh" width={12} stroke="#94a3b8" strokeWidth={1.75} direction="y" />
+                    </Bar>
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
             </div>
             <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 overflow-x-auto text-sm">
               <table className="w-full">
@@ -1101,49 +1148,58 @@ export function PresentationView({
         {chartType === "histogram" && histChartData.length > 0 && !(showHistogramDensity && histComboData.length > 0) && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
-            <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={histChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" label={{ value: histogramCol, position: "insideBottom", offset: -5 }} />
-                  <YAxis label={{ value: t("presentationView.histogramFrequencyLabel"), angle: -90, position: "insideLeft" }} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#0061bb" name={t("presentationView.histogramFrequencyLabel")} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+              {chartTitleBlock}
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={histChartData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" label={{ value: histogramCol, position: "insideBottom", offset: -5 }} />
+                    <YAxis label={{ value: t("presentationView.histogramFrequencyLabel"), angle: -90, position: "insideLeft" }} />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#0061bb" name={t("presentationView.histogramFrequencyLabel")} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
         )}
         {chartType === "histogram" && showHistogramDensity && histComboData.length > 0 && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
-            <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={histComboData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" label={{ value: histogramCol, position: "insideBottom", offset: -5 }} />
-                  <YAxis label={{ value: t("presentationView.histogramFrequencyDensityLabel"), angle: -90, position: "insideLeft" }} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#0061bb" name={t("presentationView.histogramFrequencyLabel")} />
-                  <Line type="monotone" dataKey="densityScaled" stroke="#f59e0b" strokeWidth={2} dot={false} name={t("presentationView.kdeLineLabel")} />
-                </ComposedChart>
-              </ResponsiveContainer>
+            <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+              {chartTitleBlock}
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={histComboData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" label={{ value: histogramCol, position: "insideBottom", offset: -5 }} />
+                    <YAxis label={{ value: t("presentationView.histogramFrequencyDensityLabel"), angle: -90, position: "insideLeft" }} />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#0061bb" name={t("presentationView.histogramFrequencyLabel")} />
+                    <Line type="monotone" dataKey="densityScaled" stroke="#f59e0b" strokeWidth={2} dot={false} name={t("presentationView.kdeLineLabel")} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
         )}
         {chartType === "area" && areaData.length > 0 && (
           <div className="relative group" data-chart-export-wrapper>
             {chartExportIcons}
-            <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={areaData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="x" name={xCol} tick={{ fontSize: 11 }} />
-                  <YAxis dataKey="y" name={yCol} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="y" stroke="#0061bb" fill="#0061bb" fillOpacity={0.4} name={yCol || t("presentationView.lineDefaultValueName")} />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+              {chartTitleBlock}
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={areaData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="x" name={xCol} tick={{ fontSize: 11 }} />
+                    <YAxis dataKey="y" name={yCol} tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Area type="monotone" dataKey="y" stroke="#0061bb" fill="#0061bb" fillOpacity={0.4} name={yCol || t("presentationView.lineDefaultValueName")} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
         )}
@@ -1174,18 +1230,21 @@ export function PresentationView({
           return (
             <div className="relative group" data-chart-export-wrapper>
               {chartExportIcons}
-              <div className="h-80 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={radarData}>
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="subject" />
-                    <PolarRadiusAxis angle={90} domain={[0, "auto"]} />
-                    {radarKeys.map((key, i) => (
-                      <Radar key={key} name={key} dataKey={key} stroke={PIE_COLORS[i % PIE_COLORS.length]} fill={PIE_COLORS[i % PIE_COLORS.length]} fillOpacity={0.3} strokeWidth={2} />
-                    ))}
-                    <Legend />
-                  </RadarChart>
-                </ResponsiveContainer>
+              <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4">
+                {chartTitleBlock}
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart data={radarData}>
+                      <PolarGrid />
+                      <PolarAngleAxis dataKey="subject" />
+                      <PolarRadiusAxis angle={90} domain={[0, "auto"]} />
+                      {radarKeys.map((key, i) => (
+                        <Radar key={key} name={key} dataKey={key} stroke={PIE_COLORS[i % PIE_COLORS.length]} fill={PIE_COLORS[i % PIE_COLORS.length]} fillOpacity={0.3} strokeWidth={2} />
+                      ))}
+                      <Legend />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
           );
@@ -1269,7 +1328,8 @@ export function PresentationView({
           </div>
         )}
         {chartType === "heatmap" && corrResult && (
-          <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 overflow-x-auto overflow-y-auto max-h-96 space-y-2">
+          <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 overflow-x-auto overflow-y-auto max-h-96 space-y-2 p-4">
+            {chartTitleBlock}
             <div className="p-2">
               <AIAssistPanel
                 context={`Ma trận tương quan (trực quan): ${corrResult.columnNames.join(", ")}. Mẫu hệ số: ${corrResult.matrix.slice(0, 3).map((row, i) => `${corrResult.columnNames[i]}: ${row.slice(0, 4).map((v) => v.toFixed(2)).join(", ")}`).join("; ")}.`}

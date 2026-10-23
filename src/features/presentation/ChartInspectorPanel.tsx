@@ -14,9 +14,13 @@ export const usesConfigAxes = (chartType: string): boolean =>
 export const supportsLegend = (chartType: string): boolean =>
   ["bar", "barH", "line", "scatter"].includes(chartType);
 
-/** Charts that support automatic academic title generation. */
+/** All 12 reachable charts support auto title generation. */
 export const supportsAutoTitle = (chartType: string): boolean =>
-  ["bar", "barH", "line", "scatter"].includes(chartType);
+  [
+    "bar", "barH", "line", "scatter",
+    "pie", "donut", "histogram", "box",
+    "heatmap", "area", "density", "radar"
+  ].includes(chartType);
 
 export interface ChartInspectorPanelProps {
   chartType: string;

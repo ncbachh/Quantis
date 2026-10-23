@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { ChartInspectorPanel, usesConfigAxes } from "../ChartInspectorPanel";
+import { ChartInspectorPanel, usesConfigAxes, supportsAutoTitle } from "../ChartInspectorPanel";
 import { setLocale, t } from "@/i18n";
 import { DEFAULT_CHART_CONFIG, DEFAULT_CHART_CONTROLS, type Dataset, type ChartConfig } from "@/types";
 
@@ -450,6 +450,18 @@ describe("ChartInspectorPanel Component", () => {
       expect(htmlBox).toContain('data-testid="box-value-col-select"');
       expect(htmlBox).toMatch(/<select[^>]*data-testid="box-group-col-select"[^>]*>[\s\S]*?<option[^>]*value="Department"[^>]*selected=""/);
       expect(htmlBox).toMatch(/<select[^>]*data-testid="box-value-col-select"[^>]*>[\s\S]*?<option[^>]*value="Satisfaction"[^>]*selected=""/);
+    });
+
+    it("verifies supportsAutoTitle returns true for all 12 reachable charts", () => {
+      const all12Charts = [
+        "bar", "barH", "line", "scatter",
+        "pie", "donut", "histogram", "box",
+        "heatmap", "area", "density", "radar"
+      ];
+      for (const ct of all12Charts) {
+        expect(supportsAutoTitle(ct), `${ct} should support auto title`).toBe(true);
+      }
+      expect(supportsAutoTitle("unsupported_chart")).toBe(false);
     });
   });
 });
