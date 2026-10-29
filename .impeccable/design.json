@@ -1,0 +1,261 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-30T03:51:00Z",
+  "title": "Design System: Quantis",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Academic Cobalt",
+        "canonical": "#0061bb",
+        "tonalRamp": ["#001f3f", "#003366", "#004f9a", "#0061bb", "#2582db", "#60a5fa", "#bfdbfe", "#eff6ff"]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Cobalt Deep",
+        "canonical": "#004f9a",
+        "tonalRamp": ["#00142b", "#00264d", "#003b75", "#004f9a", "#1a70c7", "#4b99e9", "#a8cff7", "#e6f2fd"]
+      },
+      "primary-muted": {
+        "role": "primary",
+        "displayName": "Cobalt Mist",
+        "canonical": "#dbeafe",
+        "tonalRamp": ["#1e3a8a", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe", "#dbeafe"]
+      },
+      "neutral-bg": {
+        "role": "neutral",
+        "displayName": "Clean Paper",
+        "canonical": "#ffffff",
+        "tonalRamp": ["#111827", "#1f2937", "#374151", "#6b7280", "#9ca3af", "#d1d5db", "#f3f4f6", "#ffffff"]
+      },
+      "neutral-surface": {
+        "role": "neutral",
+        "displayName": "Slate Surface",
+        "canonical": "#f3f4f6",
+        "tonalRamp": ["#111827", "#1f2937", "#374151", "#4b5563", "#6b7280", "#9ca3af", "#e5e7eb", "#f3f4f6"]
+      },
+      "neutral-subtle": {
+        "role": "neutral",
+        "displayName": "Subtle Wash",
+        "canonical": "#f9fafb",
+        "tonalRamp": ["#030712", "#111827", "#1f2937", "#4b5563", "#9ca3af", "#d1d5db", "#e5e7eb", "#f9fafb"]
+      },
+      "neutral-border": {
+        "role": "neutral",
+        "displayName": "Grid Border",
+        "canonical": "#e5e7eb",
+        "tonalRamp": ["#111827", "#1f2937", "#374151", "#4b5563", "#9ca3af", "#d1d5db", "#e5e7eb", "#f9fafb"]
+      },
+      "neutral-text": {
+        "role": "neutral",
+        "displayName": "Scholar Ink",
+        "canonical": "#111827",
+        "tonalRamp": ["#030712", "#111827", "#1f2937", "#374151", "#4b5563", "#6b7280", "#9ca3af", "#e5e7eb"]
+      },
+      "neutral-muted": {
+        "role": "neutral",
+        "displayName": "Muted Graphite",
+        "canonical": "#6b7280",
+        "tonalRamp": ["#111827", "#1f2937", "#374151", "#4b5563", "#6b7280", "#9ca3af", "#d1d5db", "#f3f4f6"]
+      },
+      "dark-bg": {
+        "role": "neutral",
+        "displayName": "Abyssal Slate",
+        "canonical": "#030712",
+        "tonalRamp": ["#030712", "#111827", "#1f2937", "#374151", "#4b5563", "#6b7280", "#9ca3af", "#f3f4f6"]
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "Card Charcoal",
+        "canonical": "#111827",
+        "tonalRamp": ["#030712", "#111827", "#1f2937", "#374151", "#4b5563", "#6b7280", "#9ca3af", "#f3f4f6"]
+      },
+      "dark-border": {
+        "role": "neutral",
+        "displayName": "Dark Divider",
+        "canonical": "#1f2937",
+        "tonalRamp": ["#030712", "#111827", "#1f2937", "#374151", "#4b5563", "#6b7280", "#9ca3af", "#e5e7eb"]
+      },
+      "dark-text": {
+        "role": "neutral",
+        "displayName": "Illuminated Text",
+        "canonical": "#f3f4f6",
+        "tonalRamp": ["#111827", "#1f2937", "#4b5563", "#6b7280", "#9ca3af", "#d1d5db", "#e5e7eb", "#f3f4f6"]
+      },
+      "dark-muted": {
+        "role": "neutral",
+        "displayName": "Muted Dark Text",
+        "canonical": "#9ca3af",
+        "tonalRamp": ["#111827", "#1f2937", "#374151", "#4b5563", "#6b7280", "#9ca3af", "#d1d5db", "#f9fafb"]
+      },
+      "semantic-missing": {
+        "role": "tertiary",
+        "displayName": "Missing Rose",
+        "canonical": "#f43f5e",
+        "tonalRamp": ["#4c0519", "#881337", "#be123c", "#e11d48", "#f43f5e", "#fb7185", "#fecdd3", "#fff1f2"]
+      },
+      "semantic-warning": {
+        "role": "tertiary",
+        "displayName": "Caution Amber",
+        "canonical": "#f59e0b",
+        "tonalRamp": ["#451a03", "#78350f", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fde68a", "#fef3c7"]
+      },
+      "semantic-destructive": {
+        "role": "destructive",
+        "displayName": "Error Crimson",
+        "canonical": "#dc2626",
+        "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fee2e2"]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "View titles and primary statistical section headers."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card titles, subsection captions, and dialog headers."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Standard analytical text, AI interpretations, and form inputs."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Navigation tabs, button text, and variable attribute labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "sticky-header",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Subtle elevation for sticky table and grid headers."
+      },
+      {
+        "name": "dropdown",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "purpose": "Floating context menus and dropdown selectors."
+      },
+      {
+        "name": "modal",
+        "value": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+        "purpose": "Elevated dialogs and configuration modals over dimmed backdrop."
+      }
+    ],
+    "motion": [
+      {
+        "name": "transition-standard",
+        "value": "all 150ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default duration and easing for button hover, cell selection, and tab switches."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary action button for executing analysis, saving models, and confirming changes.",
+      "html": "<button class=\"ds-btn-primary\">Run Analysis</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; background-color: #0061bb; color: #ffffff; padding: 6px 12px; font-family: Inter, sans-serif; font-size: 14px; font-weight: 500; border-radius: 6px; border: none; cursor: pointer; transition: background-color 150ms ease, opacity 150ms ease; } .ds-btn-primary:hover { background-color: #004f9a; } .ds-btn-primary:focus-visible { outline: 2px solid #0061bb; outline-offset: 2px; } .ds-btn-primary:active { opacity: 0.9; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Subdued action button for cancel, secondary filters, and resets.",
+      "html": "<button class=\"ds-btn-secondary\">Cancel</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; background-color: #f3f4f6; color: #111827; padding: 6px 12px; font-family: Inter, sans-serif; font-size: 14px; font-weight: 500; border-radius: 6px; border: 1px solid #e5e7eb; cursor: pointer; transition: background-color 150ms ease; } .ds-btn-secondary:hover { background-color: #e5e7eb; } .ds-btn-secondary:focus-visible { outline: 2px solid #0061bb; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "Single-line input field for search, column renaming, and parameter values.",
+      "html": "<input type=\"text\" class=\"ds-input\" placeholder=\"Search variables...\" />",
+      "css": ".ds-input { display: block; width: 100%; padding: 6px 12px; font-family: Inter, sans-serif; font-size: 14px; color: #111827; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; outline: none; transition: border-color 150ms ease, box-shadow 150ms ease; } .ds-input:focus { border-color: transparent; box-shadow: 0 0 0 2px #0061bb; } .ds-input::placeholder { color: #9ca3af; }"
+    },
+    {
+      "name": "Header Navigation Tab",
+      "kind": "nav",
+      "refersTo": "nav-tab",
+      "description": "Main workflow navigation tab with bottom accent bar.",
+      "html": "<button class=\"ds-tab ds-tab-active\"><span>Data View</span></button>",
+      "css": ".ds-tab { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 10px 16px; font-family: Inter, sans-serif; font-size: 14px; font-weight: 500; color: #6b7280; background: transparent; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: color 150ms ease, border-color 150ms ease; } .ds-tab:hover { color: #111827; background-color: #f3f4f6; } .ds-tab-active { color: #0061bb; border-bottom-color: #0061bb; background-color: rgba(0, 97, 187, 0.05); } .ds-tab:focus-visible { outline: 2px solid #0061bb; outline-offset: 2px; }"
+    },
+    {
+      "name": "Analysis Card Container",
+      "kind": "card",
+      "refersTo": "card-container",
+      "description": "Flat analytical card container with crisp 1px border for tests and statistics.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Descriptive Statistics</h3><p class=\"ds-card-body\">Sample size N = 450, Mean = 3.84 (SD = 0.62).</p></div>",
+      "css": ".ds-card { background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; } .ds-card-title { font-family: Inter, sans-serif; font-size: 16px; font-weight: 600; color: #111827; margin: 0 0 8px 0; } .ds-card-body { font-family: Inter, sans-serif; font-size: 14px; color: #4b5563; margin: 0; }"
+    },
+    {
+      "name": "Data Grid Cell",
+      "kind": "custom",
+      "refersTo": "grid-cell",
+      "description": "Dense tabular spreadsheet cell with monospace alignment and active focus ring.",
+      "html": "<div class=\"ds-grid-cell ds-cell-active\">3.842</div>",
+      "css": ".ds-grid-cell { display: flex; align-items: center; height: 28px; padding: 0 8px; font-family: ui-monospace, SFMono-Regular, monospace; font-size: 12px; color: #111827; background-color: #ffffff; border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; box-sizing: border-box; } .ds-cell-active { box-shadow: inset 0 0 0 2px #0061bb; background-color: rgba(0, 97, 187, 0.05); } .ds-cell-missing { background-color: #fff1f2; color: #be123c; } .ds-cell-warning { background-color: #fffbeb; color: #b45309; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Open Scholar's Desk",
+    "overview": "Quantis is a disciplined, scholarly workstation designed for undergraduate students, graduate researchers, and university faculty. It brings the functional precision, variable metadata rigors, and dense data inspection familiar from legacy econometric tools (SPSS, Stata) into a clean, modern web interface. The interface prioritizes scannable empirical data, zero-friction calculation, and transparent scientific reporting over gratuitous decoration.\n\nAesthetic philosophy centers on Scholarly Precision and Clean Restraint. Every element earns its place through utility: data grids display high-density numerical information without clipping, statistical test outputs follow clear tabular hierarchies with APA standards, and interactive affordances remain calm and tactile. Visual bloat, marketing gradients, and generic SaaS card patterns are deliberately excluded.\n\nThe design system harmonizes seamlessly with the National Economics University (NEU) AI Portal design standards, supporting both standalone academic workstations and embedded iframe environments with automatic light and dark mode synchronization.",
+    "keyCharacteristics": [
+      "High-density data grid tables with sticky numerical indices and monospace alignments.",
+      "Authoritative institutional cobalt accent paired with neutral slate-gray surfaces.",
+      "Clear semantic markers for missing data and invalid numerical inputs that educate without obstructing.",
+      "Strict 6px control and 8px container corner rhythm aligned with the NEU AI Portal design language.",
+      "Flat structural layout with purposeful, state-driven elevations."
+    ],
+    "rules": [
+      {
+        "name": "The 10% Cobalt Rule",
+        "body": "Academic Cobalt is reserved for primary focal actions, active selections, and state highlights. It should cover no more than 10% of any analytical screen to prevent visual fatigue during prolonged research sessions.",
+        "section": "colors"
+      },
+      {
+        "name": "The Semantic Reserve Rule",
+        "body": "Rose, Amber, and Crimson are strictly reserved for data validity states and system alerts. They are never used for decorative accents or unrelated categorizations.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Numbers Rule",
+        "body": "All statistical results, p-values, regression coefficients, and matrix cells must render with tabular figures or within monospace contexts so decimal points and digit positions align vertically.",
+        "section": "typography"
+      },
+      {
+        "name": "The Scientific Case Rule",
+        "body": "Variable names, statistical metrics (e.g., R², F, t, p), and formula expressions retain exact scientific capitalization; never apply CSS uppercase transformations to statistical symbols.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Canvas Rule",
+        "body": "Primary data grids, cards, and toolbars are flat at rest. Drop shadows must never be added to standard content cards or table cells; depth is conveyed purely via 1px border contrast and tonal step-downs.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do maintain a strict 6px radius (rounded-md) for controls and 8px (rounded-lg) for modal containers.",
+      "Do format all statistical output with monospace tabular numerals and scientific notation where precision demands it.",
+      "Do reserve Academic Cobalt (#0061bb) for intentional primary focal points, selections, and active states.",
+      "Do highlight missing values with soft rose (#fff1f2) and invalid numeric cells with soft amber (#fffbeb).",
+      "Do ensure all interactive elements have visible keyboard focus rings (outline: 2px solid var(--color-brand); outline-offset: 2px)."
+    ],
+    "donts": [
+      "Don't add decorative dropshadows, blurred gradient orbs, or floating glows to standard content cards.",
+      "Don't apply uppercase text transformation to variable names or statistical indicators (p, t, F, R²).",
+      "Don't round numeric values prematurely in the grid; preserve raw user input precision in data storage.",
+      "Don't use saturated red or green accents for standard neutral data states.",
+      "Don't introduce non-standard corner radiuses (e.g. 16px, 24px pill buttons) that break the NEU AI Portal alignment."
+    ]
+  }
+}
