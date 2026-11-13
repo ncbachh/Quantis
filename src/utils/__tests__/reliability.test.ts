@@ -16,7 +16,7 @@ import {
 
 /*
  * Golden fixture (spec R11). Expectations below are NOT produced by the code
- * under test: they come from dev-docs/golden/reliability_reference.py, an
+ * under test: they come from tests/fixtures/reliability/reliability_reference.py, an
  * independent pandas/scipy implementation, run on 2026-11-05:
  *
  *   n = 12, k = 5, Q3 reverse-keyed (reflection constant 6)

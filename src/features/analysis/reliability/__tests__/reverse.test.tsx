@@ -15,7 +15,7 @@ import {
 import { ItemTable } from "../ItemTable";
 
 /*
- * Golden fixture from dev-docs/golden/reliability_reference.py (same numbers as
+ * Golden fixture from tests/fixtures/reliability/reliability_reference.py (same numbers as
  * src/utils/__tests__/reliability.test.ts): Q3 is written reverse-keyed.
  * Without the reflection:
  *   alpha = 0.191428571429, CITC(Q3) = -0.657801750231, alphaIfDeleted(Q3) = 0.725971370143
