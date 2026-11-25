@@ -1,0 +1,384 @@
+{
+  "metadata": {
+    "timestamp": "2026-11-25T01:53:42.170435",
+    "target_server": "http://localhost:4000/api/quantis/analyze",
+    "container_config": {
+      "cmd": [
+        "uvicorn",
+        "main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000"
+      ],
+      "python_version": "3.12.16"
+    },
+    "scenario": "Closed-loop zero-think-time stress test (1 - 100 concurrent virtual users)",
+    "dataset_origin": "khao-sat.csv (197 valid rows cycled to 500)",
+    "sample_size": 500,
+    "variables_count": 11,
+    "concurrencies": [
+      1,
+      10,
+      25,
+      50,
+      100
+    ],
+    "duration_per_level_sec": 10.0,
+    "request_timeout_sec": 30.0
+  },
+  "endpoints": {
+    "ols": {
+      "description": "OLS Multiple Regression kèm đầy đủ 4 nhóm chẩn đoán vi phạm (BP, RESET, Cook's D, Shapiro-Wilk, HC3, VIF)",
+      "results": [
+        {
+          "concurrency": 1,
+          "duration_seconds": 11.36,
+          "total_requests": 78,
+          "successful_requests": 78,
+          "failed_requests": 0,
+          "error_rate_percent": 0.0,
+          "error_breakdown": {},
+          "rps": 6.87,
+          "latency_ms": {
+            "min": 102.9,
+            "p50": 126.6,
+            "p90": 153.4,
+            "p95": 165.2,
+            "p99": 455.7,
+            "max": 1364.2,
+            "mean": 145.6,
+            "std": 139.8
+          },
+          "docker_stats": {
+            "before": {
+              "available": true,
+              "cpu_percent": "0.26%",
+              "mem_usage": "176.7MiB / 7.446GiB",
+              "mem_percent": "2.32%"
+            },
+            "peak": {
+              "available": true,
+              "cpu_percent": "0.23%",
+              "mem_usage": "164MiB / 7.446GiB",
+              "mem_percent": "2.15%"
+            }
+          }
+        },
+        {
+          "concurrency": 10,
+          "duration_seconds": 12.18,
+          "total_requests": 68,
+          "successful_requests": 68,
+          "failed_requests": 0,
+          "error_rate_percent": 0.0,
+          "error_breakdown": {},
+          "rps": 5.58,
+          "latency_ms": {
+            "min": 1008.8,
+            "p50": 1597.6,
+            "p90": 2420.4,
+            "p95": 2614.2,
+            "p99": 2744.5,
+            "max": 2785.3,
+            "mean": 1723.7,
+            "std": 428.9
+          },
+          "docker_stats": {
+            "before": {
+              "available": true,
+              "cpu_percent": "0.23%",
+              "mem_usage": "163.9MiB / 7.446GiB",
+              "mem_percent": "2.15%"
+            },
+            "peak": {
+              "available": true,
+              "cpu_percent": "18.97%",
+              "mem_usage": "169.8MiB / 7.446GiB",
+              "mem_percent": "2.23%"
+            }
+          }
+        },
+        {
+          "concurrency": 25,
+          "duration_seconds": 12.69,
+          "total_requests": 82,
+          "successful_requests": 82,
+          "failed_requests": 0,
+          "error_rate_percent": 0.0,
+          "error_breakdown": {},
+          "rps": 6.46,
+          "latency_ms": {
+            "min": 1594.4,
+            "p50": 3824.4,
+            "p90": 4546.2,
+            "p95": 4850.1,
+            "p99": 6281.1,
+            "max": 6332.8,
+            "mean": 3706.5,
+            "std": 874.5
+          },
+          "docker_stats": {
+            "before": {
+              "available": true,
+              "cpu_percent": "0.21%",
+              "mem_usage": "170.1MiB / 7.446GiB",
+              "mem_percent": "2.23%"
+            },
+            "peak": {
+              "available": true,
+              "cpu_percent": "114.41%",
+              "mem_usage": "175.4MiB / 7.446GiB",
+              "mem_percent": "2.30%"
+            }
+          }
+        },
+        {
+          "concurrency": 50,
+          "duration_seconds": 15.9,
+          "total_requests": 97,
+          "successful_requests": 97,
+          "failed_requests": 0,
+          "error_rate_percent": 0.0,
+          "error_breakdown": {},
+          "rps": 6.1,
+          "latency_ms": {
+            "min": 3415.2,
+            "p50": 6206.9,
+            "p90": 14114.9,
+            "p95": 15591.3,
+            "p99": 15778.7,
+            "max": 15801.9,
+            "mean": 7123.3,
+            "std": 3304.8
+          },
+          "docker_stats": {
+            "before": {
+              "available": true,
+              "cpu_percent": "0.22%",
+              "mem_usage": "179MiB / 7.446GiB",
+              "mem_percent": "2.35%"
+            },
+            "peak": {
+              "available": true,
+              "cpu_percent": "108.85%",
+              "mem_usage": "182.1MiB / 7.446GiB",
+              "mem_percent": "2.39%"
+            }
+          }
+        },
+        {
+          "concurrency": 100,
+          "duration_seconds": 26.61,
+          "total_requests": 163,
+          "successful_requests": 163,
+          "failed_requests": 0,
+          "error_rate_percent": 0.0,
+          "error_breakdown": {},
+          "rps": 6.13,
+          "latency_ms": {
+            "min": 1325.3,
+            "p50": 7287.9,
+            "p90": 26031.6,
+            "p95": 26356.4,
+            "p99": 26489.5,
+            "max": 26520.6,
+            "mean": 12470.3,
+            "std": 8573.1
+          },
+          "docker_stats": {
+            "before": {
+              "available": true,
+              "cpu_percent": "0.19%",
+              "mem_usage": "182.8MiB / 7.446GiB",
+              "mem_percent": "2.40%"
+            },
+            "peak": {
+              "available": true,
+              "cpu_percent": "117.34%",
+              "mem_usage": "182.4MiB / 7.446GiB",
+              "mem_percent": "2.39%"
+            }
+          }
+        }
+      ]
+    },
+    "paf": {
+      "description": "PAF kèm Parallel Analysis (500 hoán vị) và xoay Varimax",
+      "results": [
+        {
+          "concurrency": 1,
+          "duration_seconds": 11.36,
+          "total_requests": 35,
+          "successful_requests": 35,
+          "failed_requests": 0,
+          "error_rate_percent": 0.0,
+          "error_breakdown": {},
+          "rps": 3.08,
+          "latency_ms": {
+            "min": 233.2,
+            "p50": 280.8,
+            "p90": 346.1,
+            "p95": 410.0,
+            "p99": 1136.2,
+            "max": 1453.5,
+            "mean": 324.6,
+            "std": 200.5
+          },
+          "docker_stats": {
+            "before": {
+              "available": true,
+              "cpu_percent": "0.21%",
+              "mem_usage": "185.1MiB / 7.446GiB",
+              "mem_percent": "2.43%"
+            },
+            "peak": {
+              "available": true,
+              "cpu_percent": "2.39%",
+              "mem_usage": "184.3MiB / 7.446GiB",
+              "mem_percent": "2.42%"
+            }
+          }
+        },
+        {
+          "concurrency": 10,
+          "duration_seconds": 11.58,
+          "total_requests": 22,
+          "successful_requests": 22,
+          "failed_requests": 0,
+          "error_rate_percent": 0.0,
+          "error_breakdown": {},
+          "rps": 1.9,
+          "latency_ms": {
+            "min": 396.7,
+            "p50": 5151.9,
+            "p90": 6193.7,
+            "p95": 6203.0,
+            "p99": 6208.2,
+            "max": 6209.5,
+            "mean": 5149.1,
+            "std": 1473.8
+          },
+          "docker_stats": {
+            "before": {
+              "available": true,
+              "cpu_percent": "0.20%",
+              "mem_usage": "184.2MiB / 7.446GiB",
+              "mem_percent": "2.42%"
+            },
+            "peak": {
+              "available": true,
+              "cpu_percent": "40.35%",
+              "mem_usage": "184.4MiB / 7.446GiB",
+              "mem_percent": "2.42%"
+            }
+          }
+        },
+        {
+          "concurrency": 25,
+          "duration_seconds": 12.79,
+          "total_requests": 25,
+          "successful_requests": 25,
+          "failed_requests": 0,
+          "error_rate_percent": 0.0,
+          "error_breakdown": {},
+          "rps": 1.95,
+          "latency_ms": {
+            "min": 11918.0,
+            "p50": 12627.0,
+            "p90": 12722.1,
+            "p95": 12733.3,
+            "p99": 12756.8,
+            "max": 12763.7,
+            "mean": 12500.8,
+            "std": 237.8
+          },
+          "docker_stats": {
+            "before": {
+              "available": true,
+              "cpu_percent": "0.22%",
+              "mem_usage": "184.4MiB / 7.446GiB",
+              "mem_percent": "2.42%"
+            },
+            "peak": {
+              "available": true,
+              "cpu_percent": "148.46%",
+              "mem_usage": "185MiB / 7.446GiB",
+              "mem_percent": "2.43%"
+            }
+          }
+        },
+        {
+          "concurrency": 50,
+          "duration_seconds": 25.14,
+          "total_requests": 50,
+          "successful_requests": 50,
+          "failed_requests": 0,
+          "error_rate_percent": 0.0,
+          "error_breakdown": {},
+          "rps": 1.99,
+          "latency_ms": {
+            "min": 18301.2,
+            "p50": 20336.6,
+            "p90": 24965.0,
+            "p95": 25013.9,
+            "p99": 25034.6,
+            "max": 25035.7,
+            "mean": 20933.2,
+            "std": 2105.9
+          },
+          "docker_stats": {
+            "before": {
+              "available": true,
+              "cpu_percent": "0.20%",
+              "mem_usage": "184.8MiB / 7.446GiB",
+              "mem_percent": "2.42%"
+            },
+            "peak": {
+              "available": true,
+              "cpu_percent": "164.34%",
+              "mem_usage": "188.2MiB / 7.446GiB",
+              "mem_percent": "2.47%"
+            }
+          }
+        },
+        {
+          "concurrency": 100,
+          "duration_seconds": 30.78,
+          "total_requests": 100,
+          "successful_requests": 40,
+          "failed_requests": 60,
+          "error_rate_percent": 60.0,
+          "error_breakdown": {
+            "ReadTimeout": 60
+          },
+          "rps": 1.3,
+          "latency_ms": {
+            "min": 18121.2,
+            "p50": 20651.7,
+            "p90": 22307.3,
+            "p95": 22765.6,
+            "p99": 22908.9,
+            "max": 22920.3,
+            "mean": 20698.3,
+            "std": 1224.4
+          },
+          "docker_stats": {
+            "before": {
+              "available": true,
+              "cpu_percent": "0.20%",
+              "mem_usage": "187.7MiB / 7.446GiB",
+              "mem_percent": "2.46%"
+            },
+            "peak": {
+              "available": true,
+              "cpu_percent": "164.36%",
+              "mem_usage": "198MiB / 7.446GiB",
+              "mem_percent": "2.60%"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
